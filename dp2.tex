@@ -94,13 +94,15 @@ a branching node occurring whenever two computers make distinct
 edits. If two computers are allowed to synchronize with each other,
 then branches of this tree can join together (creating nodes with two
 parents instead of just one) and so the checkpoint database becomes a
-directed acyclic graph instead. The challenge with Collabrador is to
-maintain this directed acyclic graph in a distributed fashion because
-there is no central server. Collabrador's solution is for each user to
-store in its local checkpoint database only the portion of the graph
-that it knows about while a synchronization process in the background
-lets users constantly communicate with each other to share and
-exchange parts of the graph.
+directed acyclic graph (DAG) instead. (For this reason, this paper
+uses the terms \textbf{checkpoint database} and \textbf{DAG}
+interchangeably.)  The challenge with Collabrador is to maintain this
+DAG in a distributed fashion because there is no central
+server. Collabrador's solution is for each user to store in its local
+checkpoint database only the portion of the graph that it knows about
+while a synchronization process in the background lets users
+constantly communicate with each other to share and exchange parts of
+the graph.
 
 At most times, a user's checkpoint database will be a graph with only
 a single leaf node, representing the most recent checkpoint created by
@@ -187,8 +189,8 @@ Additionally, whenever two computers synchronize, they also exchange
 their \textbf{known user lists}. All users, whether online or offline,
 are included. The purpose of this exchange is so that all users
 collectively can determine the exact group membership, even if users
-are dynamically joining the group. This does not, however, support
-users dynamically leaving the group.
+are dynamically joining the group. Collabrador does not, however,
+support users dynamically leaving the group.
 
 \subsection{Merge algorithm}
 \label{sec:merge}
