@@ -60,7 +60,7 @@ approve the resulting document before the commit is finalized.
 \subsection{System architecture}
 
 On each computer, Collabrador consists of a \textbf{text editor} and a
-\textbf{checkpoint database}. Rather than storing the final text,
+\textbf{checkpoint database}. In addition to storing the text,
 Collabrador's text editor saves a description of the
 \textbf{operations} performed by the user. These operations are
 inserting a character at a given position (\texttt{INSERT}), deleting
@@ -74,15 +74,15 @@ transformation and saves it into the local \textbf{checkpoint
   database}. [TODO: cite OT paper]
 
 To be more specific, Collabrador stores a checkpoint database
-consisting of \textbf{checkpoint objects}, keyed by the SHA-1 hash of
-the object. For full implementation details, see
-Section~\ref{sec:storage-dag}. A checkpoint object is a data structure
+consisting of \textbf{checkpoint objects}. A checkpoint object is a data structure
 encapsulating the details of the operational transformation performed
 by that edit, the hashes of the edit's parent or parents, the hashes
 of the edit's children, the hash of the unique checkpoint to be used
 as the base of the operational transformation, and the \textbf{user
   visibility list}, which is just the list of users that have locally
-stored this checkpoint. We will assume that SHA-1 has no collisions,
+stored this checkpoint. Checkpoint objects are keyed by the SHA-1 hash of
+the object itself. For full implementation details, see
+Section~\ref{sec:storage-dag}.  We will assume that SHA-1 has no collisions,
 so two checkpoints will have the same hash if and only if they perform
 the same changes to the same base from the same parents.
 
@@ -98,15 +98,17 @@ directed acyclic graph (DAG) instead. (For this reason, this paper
 uses the terms \textbf{checkpoint database} and \textbf{DAG}
 interchangeably.)  The challenge with Collabrador is to maintain this
 DAG in a distributed fashion because there is no central
-server. Collabrador's solution is for each user to store in its local
-checkpoint database only the portion of the graph that it knows about
-while a synchronization process in the background lets users
+server. Collabrador's solution is %for each user to store in its local
+%checkpoint database only the portion of the graph that it knows about while 
+a synchronization process in the background that lets users
 constantly communicate with each other to share and exchange parts of
-the graph.
+the graph. Collabrador operates on top of TCP/IP to ensure reliable and
+in-order packet delivery.
 
-At most times, a user's checkpoint database will be a graph with only
-a single leaf node, representing the most recent checkpoint created by
-the user. A database with just one leaf node is in the \textbf{merged}
+The checkpoint database can be in two states. At most times, a user's 
+checkpoint database will be a graph with only a single leaf node, 
+representing the most recent checkpoint created by the user. 
+A database with just one leaf node is in the \textbf{merged}
 state. When synchronizing with another user, that user's checkpoint
 objects will be copied into the local checkpoint database, causing the
 graph to have two leaf nodes. A database with two leaf nodes is in the
@@ -117,11 +119,77 @@ single checkpoint, and then save this checkpoint into the database as
 a node with two parents and an operational transformation relative to
 the least common ancestor.
 
+\subsubsection{Storage of the DAG}
+\label{sec:storage-dag}
+
+The system used by clients to store the DAG of document versions must
+meet performance and reliability requirements.
+
+The performance requirements are easily addressed by having each node
+store pointers to its children, parents, and the lowest common
+ancestor of its parents.  Since nodes are named by hash, we also
+maintain an index table containing pointers to nodes by hash.
+Finally, we keep pointers to all current leaf nodes (usually one, but
+sometimes two), and the original common ancestor for the document.
+Using this structure, we may perform all relevant graph traversals in
+constant time per node.
+
+To meet our reliability (particularly atomicity) requirements, we
+store the DAG in a database that is designed specifically to provide
+fault-tolerance guarantees.  One such candidate is PostgreSQL
+\cite{postgres}.
+
+\subsubsection{Checkpoints}
+
+In order to support named checkpoints, known as \textbf{commits},
+Collabrador needs one additional data structure. Each user should
+store a hash table mapping names to checkpoint hashes. With this data
+structure, the algorithm for returning a specific named version of a
+document is as easy as looking up the hash associated with the name,
+and then looking up the checkpoint object associated with that hash.
+
+The process for creating a commit is mostly the same as the process
+for creating an unnamed checkpoint. The only difference is that,
+during the synchronization process, users also exchange the name of
+the checkpoint and its associated hash. If the initiator successfully
+synchronizes with all users on the network, the initiator's leaf node
+is the same hash as at the start of the process, and the leaf node's
+user visibility list exactly equals the computer's known user list,
+then the commit is successful. If any of these conditions are not met
+within a pre-set number of passes through the synchronization
+round-robin, the commit fails.
+
+The specifications of the Collabrador system ensure that a successful
+run of the commit algorithm guarantees correctness of the
+process. Evidently, all users in the user visibility list have the
+committed version and associated commit name stored
+locally. Additionally, the initiator's user visibility list must
+necessarily contain all members of the group (even ones who
+dynamically joined) because the synchronization process added all
+users' user visibility lists to the initiator's. The only possible
+failure mode is if there is a new user who has never joined the same
+network as a pre-existing user, but this new user can be safely
+disregarded because it has never had the chance to obtain any version
+of the document, much less modify it.
+
+Finally, it is worth noting what happens in the case of a failed
+commit. Imagine trying to commit a version named ``final'' and it
+fails, and then trying again. If a user in the system is asked for the
+version ``final'' before the second commit finishes, there is no
+guarantee as to what version of the document it will return. To avoid
+this problem, Collabrador requires that no two commit attempts use the
+same name. Because some users may not know the names of all failed
+commits, this restriction is enforced in practice, not in software. In
+other words, the human user needs to know that trying the same name
+twice can lead to undesirable results, but there are no software
+safeguards to prevent this situation from occurring.
+
 \subsection{Sync algorithm}
 
-\textbf{Synchronization} is a process which causes two computers each
-with a merged checkpoint database to converge to the same merged
-checkpoint database. The computer that initiates the synchronization
+\textbf{Synchronization} is a process which causes two computers with 
+unique checkpoint databases to converge to a single checkpoint database. 
+Each machine must begin and end with a checkpoint database in the merged 
+state. The computer that initiates the synchronization
 process is called the \emph{initiator}, and the other computer is
 called the \emph{provider}. At a high level, the synchronization
 process performs three steps:
@@ -137,7 +205,9 @@ have the provider send its entire checkpoint database to the initiator
 in the first step. However, it is usually the case that most of the
 provider's database is already known to the initiator. To minimize the
 amount of communication required, the provider only needs to send the
-checkpoint objects it has that the initiator does not have.
+checkpoint objects it has that the initiator does not have. The process 
+for discovering which objects the initiator does not have is described 
+below.
 
 Let $I$ be the leaf node of the initiator's database, let $P$ be the
 leaf node of the provider's database, and let $C$ be any common
@@ -338,71 +408,6 @@ subsequent non-conflicting changes.  An example is shown in figure
   \label{fig:merge}
 \end{figure}
 
-\subsection{Storage of the DAG}
-\label{sec:storage-dag}
-
-The system used by clients to store the DAG of document versions must
-meet performance and reliability requirements.
-
-The performance requirements are easily addressed by having each node
-store pointers to its children, parents, and the lowest common
-ancestor of its parents.  Since nodes are named by hash, we also
-maintain an index table containing pointers to nodes by hash.
-Finally, we keep pointers to all current leaf nodes (usually one, but
-sometimes two), and the original common ancestor for the document.
-Using this structure, we may perform all relevant graph traversals in
-constant time per node.
-
-To meet our reliability (particularly atomicity) requirements, we
-store the DAG in a database that is designed specifically to provide
-fault-tolerance guarantees.  One such candidate is PostgreSQL
-\cite{postgres}.
-
-\subsection{Checkpoints}
-
-In order to support named checkpoints, known as \textbf{commits},
-Collabrador needs one additional data structure. Each user should
-store a hash table mapping names to checkpoint hashes. With this data
-structure, the algorithm for returning a specific named version of a
-document is as easy as looking up the hash associated with the name,
-and then looking up the checkpoint object associated with that hash.
-
-The process for creating a commit is mostly the same as the process
-for creating an unnamed checkpoint. The only difference is that,
-during the synchronization process, users also exchange the name of
-the checkpoint and its associated hash. If the initiator successfully
-synchronizes with all users on the network, the initiator's leaf node
-is the same hash as at the start of the process, and the leaf node's
-user visibility list exactly equals the computer's known user list,
-then the commit is successful. If any of these conditions are not met
-within a pre-set number of passes through the synchronization
-round-robin, the commit fails.
-
-The specifications of the Collabrador system ensure that a successful
-run of the commit algorithm guarantees correctness of the
-process. Evidently, all users in the user visibility list have the
-committed version and associated commit name stored
-locally. Additionally, the initiator's user visibility list must
-necessarily contain all members of the group (even ones who
-dynamically joined) because the synchronization process added all
-users' user visibility lists to the initiator's. The only possible
-failure mode is if there is a new user who has never joined the same
-network as a pre-existing user, but this new user can be safely
-disregarded because it has never had the chance to obtain any version
-of the document, much less modify it.
-
-Finally, it is worth noting what happens in the case of a failed
-commit. Imagine trying to commit a version named ``final'' and it
-fails, and then trying again. If a user in the system is asked for the
-version ``final'' before the second commit finishes, there is no
-guarantee as to what version of the document it will return. To avoid
-this problem, Collabrador requires that no two commit attempts use the
-same name. Because some users may not know the names of all failed
-commits, this restriction is enforced in practice, not in software. In
-other words, the human user needs to know that trying the same name
-twice can lead to undesirable results, but there are no software
-safeguards to prevent this situation from occurring.
-
 \section{Analysis}
 
 \subsection{Use cases and failure analysis}
@@ -517,8 +522,13 @@ Collabrador is distributed, synchronizations are pairwise, making the
 sync algorithm quadratic with respect to the number of users. A
 centralized server would have asymptotically linear synchronization.
 
-Many collaborative editors(?) use version vectors: <TODO definition>.
-The DAG is more visually informative than a version vector and
+Many collaborative editors(?) use version vectors: a vector of version 
+corresponding to each user. For example, V = (1, 2, 2) means that the first
+user has version 1 of the document, and the other two have the second version.
+This is a compact and nifty way to represent version data. V1 is newer than V2
+if all of V1's elements are greater than or equal to V2's. If one vector is not
+clearly older than another, e.g. V1 = (1,2,3) and V2 = (3,1,4), then there is 
+a conflict. A DAG is more visually informative than a version vector and
 provides an intuitive way for users to visually track the document
 history. The DAG allows us to perform OTs and use a highly autonomous
 merge algorithm.  A system using version vectors would require the
@@ -543,8 +553,8 @@ list that does not include the new user, and think that it is correct
 because his client was unaware of the new user.  There are ways around
 these problems, but this is a challenge we have left for later
 releases. The feature was not included in the first release because
-static groups greatly simplify the design, and allows Collabrador to
-have stronger guarantees about correctness.
+static groups greatly simplify the design, and allows Collabrador toh
+ave stronger guarantees about correctness.
 
 Finally, it is worth noting that Collabrador does not have an
 authentication system, so it is very simple for a user to send false
