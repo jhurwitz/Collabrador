@@ -346,9 +346,8 @@ ancestor of its parents.  Since nodes are named by hash, we also
 maintain an index table containing pointers to nodes by hash.
 Finally, we keep pointers to all current leaf nodes (usually one, but
 sometimes two), and the original common ancestor for the document.
-provide quick operations and fault tolerance.  Using this structure,
-we may perform all relevant graph traversals in constant time per
-node.
+Using this structure, we may perform all relevant graph traversals in
+constant time per node.
 
 To meet our reliability (particularly atomicity) requirements, we
 store the DAG in a database that is designed specifically to provide
