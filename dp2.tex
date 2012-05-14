@@ -403,137 +403,156 @@ safeguards to prevent this situation from occurring.
 
 \subsection{Use cases and failure analysis}
 
-Below we will discuss a few use cases.
+This section discusses a few use cases.
 
-1. Two users, Alice and Bob, add lots of text to the document in different paragraphs, 
-and also make different changes to a single sentence in the introduction. 
+\emph{Two users, Alice and Bob, add lots of text to the document in
+  different paragraphs, and also make different changes to a single
+  sentence in the introduction. Once Alice and Bob connect to each
+  other, your design must not require resolving conflicts for the
+  changes to different paragraphs.}
 
-Alice and Bob will not have to resolve conflicts when the change the document in
-different paragraphs. For example, if transform U = insert(12, ‘a whole bunch of text’)
-represents Bob adding text to paragraph one, and V = insert(422, ‘more text here!’)
-represents Alice adding text to paragraph two, the resulting merge would be 
-U(V)*U =  insert(434, ‘more text here!’)*insert(12, ‘a whole bunch of text’) 
-or V(U)*V = insert(12, ‘a whole bunch of text’)*insert(422, ‘more text here!’). 
-When Alice and Bob modify the same sentence, with Alice’s changes represented as 
-X and Bob’s changes represented as Y, their changes will require conflict resolution
-if X(Y) tries to compose two OTs that operate on the same index (see fig 2). Otherwise, 
-the conflict will be automatically resolved as before. 
- 
-2. Two users, Alice and Bob, are connected to each other, and Bob makes a change to a 
-sentence. Concurrently, an offline user, Charlie, changes that same sentence in a 
-different way. Alice goes offline but later meets Charlie, at which point they 
-synchronize, detect the conflict, and Alice resolves the conflict. At a later point,
-Charlie meets Bob and synchronizes with him.
+Alice and Bob will not have to resolve conflicts when the change the
+document in different paragraphs. For example, if transform $U =
+insert(12, \mathrm{`a whole bunch of text'})$ represents Bob adding
+text to paragraph one, and $V = insert(422, \mathrm{`more text
+  here!'})$ represents Alice adding text to paragraph two, the
+resulting merge would be $U(V)\circ U = insert(434, \mathrm{`more text
+  here!'})\circ insert(12, \mathrm{`a whole bunch of text'})$ or
+$V(U)\circ V = insert(12, \mathrm{`a whole bunch of text'})\circ
+insert(422, \mathrm{`more text here!'})$.  When Alice and Bob modify
+the same sentence, with Alice's changes represented as $X$ and Bob's
+changes represented as $Y$, their changes will require conflict
+resolution if $X(Y)$ tries to compose two OTs that operate on the same
+index (see Figure~\ref{fig:merge}). Otherwise, the conflict will be
+automatically resolved as before.
+
+\emph{Two users, Alice and Bob, are connected to each other, and Bob
+  makes a change to a sentence. Concurrently, an offline user,
+  Charlie, changes that same sentence in a different way. Alice goes
+  offline but later meets Charlie, at which point they synchronize,
+  detect the conflict, and Alice resolves the conflict. At a later
+  point, Charlie meets Bob and synchronizes with him.}
   
-After Alice and Charlie meet, Charlie’s graph contains the conflict resolution.  
-When Charlie and Bob meet, the merge algorithm detects that Bob’s DAG is a sub-graph 
-of Charlie’s, so Bob’s document and DAG can be updated to be identical to Charlie’s. 
-See Image.
+After Alice and Charlie meet, Charlie's graph contains the conflict
+resolution.  When Charlie and Bob meet, the merge algorithm detects
+that Bob's DAG is a sub-graph of Charlie's, so Bob's document and DAG
+can be updated to be identical to Charlie's.  See Image.
 
-Image: Conflict resolution between Alice, Charlie and Bob.
+TODO Image: Conflict resolution between Alice, Charlie and Bob.
 
-3. One user, Alice, moves several paragraphs from one section of the paper to another,
-but does not change the contents of those paragraphs. Concurrently, another user, Bob,
-who is offline, edits a sentence in one of those paragraphs. 
+\emph{One user, Alice, moves several paragraphs from one section of
+  the paper to another, but does not change the contents of those
+  paragraphs. Concurrently, another user, Bob, who is offline, edits a
+  sentence in one of those paragraphs.}
 
-When Alice and Bob meet, no conflict resolution will be required. Alice’s OTs are 
-X = move(12,422, 1022), etc.  The OT of Bob’s changes is 
-Y = insert(222, ‘spurious text generation’). When Bob meets Alice, his Collabrador
-client will synchronize with her, and merge their text. The resulting transform will
-be Y(X)*X = insert(822, ‘spurious text generation’)*move(12,422, 1022). The index
-822 is determined like so: Index 1022 becomes index 612, because 1022-(422-12) = 612. 
-The original insert, at location 222, is 210 indices away from what is now index 612. 
-612+210 = 822. An equivalent result can be achieved from 
-X(Y)*X = move(12,448,1048)*insert(222,’spurious text generation’), where the new_loc 
-and end_index have been incremented by 24 (the number of characters in the inserted string).
+When Alice and Bob meet, no conflict resolution will be
+required. Alice's OTs are X = move(12,422, 1022), etc.  The OT of
+Bob's changes is Y = insert(222, `spurious text generation'). When Bob
+meets Alice, his Collabrador client will synchronize with her, and
+merge their text. The resulting transform will be Y(X)*X = insert(822,
+`spurious text generation')*move(12,422, 1022). The index 822 is
+determined like so: Index 1022 becomes index 612, because
+1022-(422-12) = 612.  The original insert, at location 222, is 210
+indices away from what is now index 612.  612+210 = 822. An equivalent
+result can be achieved from X(Y)*X =
+move(12,448,1048)*insert(222,`spurious text generation'), where the
+new\_loc and end\_index have been incremented by 24 (the number of
+characters in the inserted string).
 
-4. Two users, while not connected to each other, find a spelling mistake and correct 
-the same word in the same way. 
-  
-Since the two versions have the same parent, change log and content, 
-the hashes will be the same, and they will be recognized as the same version,
-making conflict resolution unnecessary.
+\emph{Two users, while not connected to each other, find a spelling
+  mistake and correct the same word in the same way.}
+
+Since the two versions have the same parent, change log and content,
+the hashes will be the same, and they will be recognized as the same
+version, making conflict resolution unnecessary.
 
 \subsubsection{Failures}
-Each Collabrador client keeps the list of users associated with a document,
-and tracks whether or not they are reachable. A commit cannot successfully 
-begin unless all users are reachable. If any user is disconnected during the 
-commit process, the commit fails. The commit may have created a node on some 
-of the user’ computers if it partially completed. To avoid conflicts, Collabrador
-requires each attempted commit to have a unique name. This ensures that no
-user will ever have a commit with the same name in their DAG. If the commit
-process notices that the commit name is already contained in a user’s DAG, 
-the commit aborts immediately. 
 
-Synchronization can occur when a user’s Collabrador client sees one or more 
-other users online, and it is a much more flexible process than committing.
-When user A decides to sync, a checkpoint is recorded to the local graph. 
-If user A’s machine crashes while saving the checkpoint to the local graph, 
-the checkpoint is lost (all-or-nothing). If user A’s machine crashes after
-saving the checkpoint locally, but before initiating the sync process, then 
-Collabrador client will send out a sync request when user A comes back online.
-If user A crashes after sending a sync request to user B, the machine running 
-the merge algorithm will roll back all changes if user A’s machine becomes
-unresponsive before the sync process completes. If any user goes offline after
-he finishes syncing with at least one machine, but before all pairwise syncs
-have completed, the sync process will go on amongst all other machines. The 
-booted user will re-synchronize during the integration process when he comes
-back online.
+Each Collabrador client keeps the list of users associated with a
+document, and tracks whether or not they are reachable. A commit
+cannot successfully begin unless all users are reachable. If any user
+is disconnected during the commit process, the commit fails. The
+commit may have created a node on some of the user' computers if it
+partially completed. To avoid conflicts, Collabrador requires each
+attempted commit to have a unique name. This ensures that no user will
+ever have a commit with the same name in their DAG. If the commit
+process notices that the commit name is already contained in a user's
+DAG, the commit aborts immediately.
 
-We use TCP for reliable and accurate packet delivery, so we do not have to 
-worry about data corruption at the application layer. 
+Synchronization can occur when a user's Collabrador client sees one or
+more other users online, and it is a much more flexible process than
+committing.  When user A decides to sync, a checkpoint is recorded to
+the local graph.  If user A's machine crashes while saving the
+checkpoint to the local graph, the checkpoint is lost
+(all-or-nothing). If user A's machine crashes after saving the
+checkpoint locally, but before initiating the sync process, then
+Collabrador client will send out a sync request when user A comes back
+online.  If user A crashes after sending a sync request to user B, the
+machine running the merge algorithm will roll back all changes if user
+A's machine becomes unresponsive before the sync process completes. If
+any user goes offline after he finishes syncing with at least one
+machine, but before all pairwise syncs have completed, the sync
+process will go on amongst all other machines. The booted user will
+re-synchronize during the integration process when he comes back
+online.
 
+We use TCP for reliable and accurate packet delivery, so we do not
+have to worry about data corruption at the application layer.
 
 \subsection{Performance}
 
 TODO by dlaw and jhurwitz
 
 \subsection{Design Tradeoffs and Flaws}
-Having no centralized server makes Collabrador a more reliable document 
-editing system, because there is no single point of failure. It also
-allows for increased flexibility, as users can edit while connected 
-to the internet, ad-hoc, or offline. However, because Collabrador is
-distributed, synchronizations are pairwise, making the sync algorithm
-quadratic with respect to the number of users. A centralized server 
-would have asymptotically linear synchronization.
 
-Many collaborative editors(?) use version vectors: <definition>. 
-The DAG is more visually informative than a version vector and provides
-an intuitive way for users to visually track the document history. The 
-DAG allows us to perform OTs and use a highly autonomous merge algorithm.
-A system using version vectors would require the user to merge conflicts 
-more frequently, since less information is available. The cost, however, 
-is that the DAG grows linearly with edit history. The more frequently a 
-document has been committed, the more overhead there is. Version vector 
-overhead only increases as the number of users editing a document increases. 
+Having no centralized server makes Collabrador a more reliable
+document editing system, because there is no single point of
+failure. It also allows for increased flexibility, as users can edit
+while connected to the internet, ad-hoc, or offline. However, because
+Collabrador is distributed, synchronizations are pairwise, making the
+sync algorithm quadratic with respect to the number of users. A
+centralized server would have asymptotically linear synchronization.
 
-Related to this the fact that the merge algorithm takes longer as a the 
-document gets longer. This effect can be combated with the use of checkpoints.
+Many collaborative editors(?) use version vectors: <TODO definition>.
+The DAG is more visually informative than a version vector and
+provides an intuitive way for users to visually track the document
+history. The DAG allows us to perform OTs and use a highly autonomous
+merge algorithm.  A system using version vectors would require the
+user to merge conflicts more frequently, since less information is
+available. The cost, however, is that the DAG grows linearly with edit
+history. The more frequently a document has been committed, the more
+overhead there is. Version vector overhead only increases as the
+number of users editing a document increases.
 
-We support only named checkpoints or dynamic membership, not both. This is 
-because the ability to delete users greatly complicates things. For example,
-if user A is deleted, and broadcasts while only user B is available, but
-then user B is deleted before he can pass on the word about user A. This
-presents problems for commits, because all users are required to be online. 
-Also, if a user were allowed to join while a commit was underway, the 
-initiator might receive a visibility list that does not include the new user,
-and think that it is correct because his client was unaware of the new user. 
-There are ways around these problems, but this is a challenge we have left 
-for later releases. The feature was not included in the first release because 
-static groups greatly simplify the design, and allows Collabrador to have
-stronger guarantees about correctness. 
+Related to this the fact that the merge algorithm takes longer as a
+the document gets longer. This effect can be combated with the use of
+checkpoints.
 
-Finally, it is worth noting that Collabrador does have an authentication system, 
-so it is very simple for a user to send false changes. 
+We support only named checkpoints or dynamic membership, not
+both. This is because the ability to delete users greatly complicates
+things. For example, if user A is deleted, and broadcasts while only
+user B is available, but then user B is deleted before he can pass on
+the word about user A. This presents problems for commits, because all
+users are required to be online.  Also, if a user were allowed to join
+while a commit was underway, the initiator might receive a visibility
+list that does not include the new user, and think that it is correct
+because his client was unaware of the new user.  There are ways around
+these problems, but this is a challenge we have left for later
+releases. The feature was not included in the first release because
+static groups greatly simplify the design, and allows Collabrador to
+have stronger guarantees about correctness.
 
+Finally, it is worth noting that Collabrador does have an
+authentication system, so it is very simple for a user to send false
+changes.
 
 \section{Conclusion}
 
-Collabrador is a sophisticated collaborative document editing system that
-gives users flexibility in connectivity. It uses industry-standard operational 
-transforms to merge changes, and has a failure-resistant synchronization process.
-Problems that remain to be solved include dynamic membership and adding an
-authentication system. 
+Collabrador is a sophisticated collaborative document editing system
+that gives users flexibility in connectivity. It uses
+industry-standard operational transforms to merge changes, and has a
+failure-resistant synchronization process.  Problems that remain to be
+solved include dynamic membership and adding an authentication system.
 
 \bibliographystyle{IEEEtran} \bibliography{IEEEabrv,dp2}
 
