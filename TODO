@@ -6,3 +6,4 @@
 *say that all users start with a blank document (so LCA must exist)
 *describe in more detail how to find LCA
 *explain that OT contains merge conflict resolution
+*design flaw: reconstructing document from OTs can be slow (but only need to do this when you first open it)
