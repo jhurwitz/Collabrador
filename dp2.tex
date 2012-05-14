@@ -71,9 +71,7 @@ collectively, these operations form an \textbf{operational
 document. When the user clicks the ``save'' button, Collabrador
 creates a \textbf{checkpoint} containing this operational
 transformation and saves it into the local \textbf{checkpoint
-  database}. [TODO: cite OT paper] [TODO: think about whether the user
-should explicitly click ``save'' or if this should happen in the
-background]
+  database}. [TODO: cite OT paper]
 
 To be more specific, the checkpoint database is a dynamic perfect hash
 table of \textbf{checkpoint objects}, keyed by the SHA-1 hash of the
@@ -109,12 +107,12 @@ the user. A database with just one leaf node is in the \textbf{merged}
 state. When synchronizing with another user, that user's checkpoint
 objects will be copied into the local checkpoint database, causing the
 graph to have two leaf nodes. A database with two leaf nodes is in the
-\textbf{unmerged} state. Then, as described in [TODO: cite the other
-section], the Collabrador merge algorithm will find the least common
-ancestor of these leaves, merge the two edits into a single
-checkpoint, and then save this checkpoint into the database as a node
-with two parents and an operational transformation relative to the
-least common ancestor.
+\textbf{unmerged} state. Then, as described in
+Section~\ref{sec:merge}, the Collabrador merge algorithm will find the
+least common ancestor of these leaves, merge the two edits into a
+single checkpoint, and then save this checkpoint into the database as
+a node with two parents and an operational transformation relative to
+the least common ancestor.
 
 \subsection{Sync algorithm}
 
