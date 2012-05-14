@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.1)  13 MAY 2012 21:59
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2012.5.1)  13 MAY 2012 22:52
 entering extended mode
  %&-line parsing enabled.
 **dp2.tex
@@ -210,43 +210,41 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 17.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [1] [2]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 71.
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] [1]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <10.95> on input line 60.
+ [2]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 84.
 
 (/usr/share/texmf-texlive/tex/latex/base/omscmr.fd
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 71.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <10.95> on input line 113.
-
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 84.
+ [3]
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[3] [4] (./dp2.bbl [5]) [6] (./dp2.aux) ) 
+[4] [5] (./dp2.bbl) [6] (./dp2.aux) ) 
 Here is how much of TeX's memory you used:
- 1564 strings out of 495061
- 20610 string characters out of 1182622
- 91436 words of memory out of 3000000
- 4759 multiletter control sequences out of 15000+50000
+ 1565 strings out of 495061
+ 20621 string characters out of 1182622
+ 89446 words of memory out of 3000000
+ 4760 multiletter control sequences out of 15000+50000
  9493 words of font info for 34 fonts, out of 3000000 for 9000
  28 hyphenation exceptions out of 8191
- 25i,13n,32p,1088b,407s stack positions out of 5000i,500n,10000p,200000b,50000s
-</usr/share/texmf-texlive/fonts/type1/
-public/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsf
-onts/cm/cmbx12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmm
-i10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr10.pfb></us
-r/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texm
-f-texlive/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texmf-texlive/fo
-nts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texmf-texlive/fonts/type1/pub
-lic/amsfonts/cm/cmsy10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfont
-s/cm/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmti10.
-pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on dp2.pdf (7 pages, 168937 bytes).
+ 25i,13n,32p,1048b,407s stack positions out of 5000i,500n,10000p,200000b,50000s
+</usr/share/texmf-texlive/fonts/type1/publ
+ic/amsfonts/cm/cmbx10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts
+/cm/cmbx12.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmmi10.
+pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/sh
+are/texmf-texlive/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texmf-te
+xlive/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texmf-texlive/fonts/
+type1/public/amsfonts/cm/cmr8.pfb></usr/share/texmf-texlive/fonts/type1/public/
+amsfonts/cm/cmsy10.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm
+/cmsy8.pfb></usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmti10.pfb>
+</usr/share/texmf-texlive/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on dp2.pdf (7 pages, 171219 bytes).
 PDF statistics:
  70 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
