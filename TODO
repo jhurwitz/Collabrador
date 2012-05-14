@@ -7,3 +7,4 @@
 *describe in more detail how to find LCA
 *explain that OT contains merge conflict resolution
 *design flaw: reconstructing document from OTs can be slow (but only need to do this when you first open it)
+*be consistent about saying computer/user/"instance of Collabrador"

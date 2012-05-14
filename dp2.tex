@@ -118,22 +118,54 @@ least common ancestor.
 
 \subsection{Sync algorithm}
 
-The process for \textbf{synchronizing} the checkpoint databases of two
-computers is straightforward. One computer, the \emph{initiator},
-sends a request to the other computer, the \emph{provider}, asking for
-the hash of the leaf node in its checkpoint database. If this
-checkpoint is already in the initiator's database, then both the
-initiator and provider are added to the checkpoint's user visibility
-list (if they weren't already included), and then the synchronization
-proceeds to the second stage of synchronization, in which the
-initiator sends its entire database to the provider using a similar
-process. Otherwise, the initiator asks for the full checkpoint object
-of this leaf, and then recursively requests the checkpoint objects
-corresponding to its parents until the initiator has incorporated the
-provider's entire checkpoint database. At this point, the initiator
-runs the merge algorithm, sets the resulting checkpoint's user
-visibility list to contain only the initiator and provider, and then
-proceeds to the second stage of synchronization.
+\textbf{Synchronization} is a process which causes two computers each
+with a merged checkpoint database to converge to the same merged
+checkpoint database. The computer that initiates the synchronization
+process is called the \emph{initiator}, and the other computer is
+called the \emph{provider}. At a high level, the synchronization
+process performs three steps:
+\begin{enumerate}
+\item The provider sends its checkpoint database to the initiator.
+\item The initiator, which is now unmerged, locally performs the merge
+  algorithm described in Section~\ref{sec:merge}.
+\item The initiator sends its (now merged) checkpoint database to the
+  initiator.
+\end{enumerate}
+One possible implementation of the synchronization process would be to
+have the provider send its entire checkpoint database to the initiator
+in the first step. However, it is usually the case that most of the
+provider's database is already known to the initiator. To minimize the
+amount of communication required, the provider only needs to send the
+checkpoint objects it has that the initiator does not have.
+
+Let $I$ be the leaf node of the initiator's database, let $P$ be the
+leaf node of the provider's database, and let $C$ be any common
+ancestor of $I$ and $P$. There is guaranteed to be at least one common
+ancestor because, at the very least, the object representing the
+initial blank document is necessarily an ancestor of all checkpoint
+objects. Thus, the provider only needs to send the nodes ``between''
+$C$ and $P$. To further minimize the amount of the database
+transmitted, it's ideal for $C$ to be the \emph{least} common ancestor
+of $I$ and $P$.
+
+To find the least common ancestor in a distributed fashion, the
+provider performs the following algorithm: It sends $P$'s hash to the
+initiator and asks if this object was already in the initiator's
+checkpoint database. If it was, then this step of the synchronization
+process is complete. However, Collabrador also needs to update $P$'s
+user visibility list to include both the initiator and the provider
+(if they weren't already included). If $P$ was not already in the
+initiator's database, then the initiator asks for the full checkpoint
+object corresponding to $P$, and then the provider sends both this and
+recusively sends the hashes of $P$'s parents using the same
+process. This process will terminate upon reaching $C$. At this point,
+the initiator has the provider's entire checkpoint database.
+
+Next, the initiator performs the merge algorithm using this most
+recently transmitted object $C$ as the common ancestor, and sets the
+user visibility list of the resulting leaf node to contain only the
+provider and the initiator. Finally, the initiator sends its entire
+checkpoint database to the provider using the aforementioned process.
 
 When there are more than two computers, Collabrador has them
 synchronize in a pairwise fashion. The implementation of Collabrador
@@ -160,6 +192,7 @@ are dynamically joining the group. This does not, however, support
 users dynamically leaving the group.
 
 \subsection{Merge algorithm}
+\label{sec:merge}
 
 The merge algorithm is based on the operational transform (``OT''),
 which is the conflict resolution technique used by all major
