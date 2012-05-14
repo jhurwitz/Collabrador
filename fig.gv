@@ -1,0 +1,7 @@
+digraph fig {
+ inside_out -> outside_in [ label = "X" ];
+ outside_in -> outside [ label = "Y" ];
+ inside_out -> ixnside_out [ label = "Z" ];
+ outside_in -> outside_ixn [ label = "X(Z)" ];
+ ixnside_out -> outside_ixn [ label = "Z(X)" ];
+}
