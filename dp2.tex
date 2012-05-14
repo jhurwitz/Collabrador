@@ -26,34 +26,138 @@ storing the text of a document, Collabrador logs each user's edits as
 individual insert, delete, and move operations.  When users make
 distinct changes to a document, the branches can be merged by
 replaying the changes made by one user atop the changes made by
-another user.  This technique is known as the operational
-transform and is the basis for all major collaborative editors.
+another user.  This technique is known as the operational transform
+and is the basis for all major collaborative editors.
 
 \section{Design}
 
-Users have the ability to edit documents offline. Once the user comes back online Collabrador synchronizes with other online users and merges the changes made while offline. Direct connectivity is also supported, using ad-hoc networking and Bonjour to discover other Collabrador users. When a user joins the internet (or an ad-hoc network), his Collabrador client will integrate him into the network, merging the latest commit into his local copy.
+Users have the ability to edit documents offline. Once the user comes
+back online Collabrador synchronizes with other online users and
+merges the changes made while offline. Direct connectivity is also
+supported, using ad-hoc networking and Bonjour to discover other
+Collabrador users. When a user joins the internet (or an ad-hoc
+network), his Collabrador client will integrate him into the network,
+merging the latest commit into his local copy.
 
-A checkpoint occurs automatically when a user saves, and is named by hash of the document, provenance graph, and change log. Checkpoints happen when a user fully connected, offline, or connected ad-hoc. The hash for a checkpoint will be unique unless users make the same changes in the same way, thus there will always be agreement as to which document version corresponds to a version name. We will also allow user-provided comments e.g. ``Ben's final draft'', however the user is responsible for ensuring that these are useful. 
+A checkpoint occurs automatically when a user saves, and is named by
+hash of the document, provenance graph, and change log. Checkpoints
+happen when a user fully connected, offline, or connected ad-hoc. The
+hash for a checkpoint will be unique unless users make the same
+changes in the same way, thus there will always be agreement as to
+which document version corresponds to a version name. We will also
+allow user-provided comments e.g. ``Ben's final draft'', however the
+user is responsible for ensuring that these are useful.
 
-Commits are a special type of checkpoint that a user manually initiates. The commit process involves merging changes from all users into one agreed-upon document. Merges are autonomous unless there has been two or more edits at the same point, relative to a common ancestor. This is called a conflict. If conflicts occurs, the machine running the merge algorithm will ask the user to resolve them by hand. Once each user's changes have been merged, all users must approve the resulting document before the commit is finalized. 
+Commits are a special type of checkpoint that a user manually
+initiates. The commit process involves merging changes from all users
+into one agreed-upon document. Merges are autonomous unless there has
+been two or more edits at the same point, relative to a common
+ancestor. This is called a conflict. If conflicts occurs, the machine
+running the merge algorithm will ask the user to resolve them by
+hand. Once each user's changes have been merged, all users must
+approve the resulting document before the commit is finalized.
 
 \subsection{System architecture}
 
-On each computer, Collabrador consists of a \textbf{text editor} and a \textbf{checkpoint database}. Rather than storing the final text, Collabrador's text editor saves a description of the \textbf{operations} performed by the user. These operations are inserting a character at a given position (\texttt{INSERT}), deleting a character at a given position (\texttt{DELETE}), and using cut/paste to move a block of text from one position to another (\texttt{MOVE}); collectively, these operations form an \textbf{operational transformation} describing how the user modified the initial document. When the user clicks the ``save'' button, Collabrador creates a \textbf{checkpoint} containing this operational transformation and saves it into the local \textbf{checkpoint database}. [TODO: cite OT paper] [TODO: think about whether the user should explicitly click ``save'' or if this should happen in the background]
+On each computer, Collabrador consists of a \textbf{text editor} and a
+\textbf{checkpoint database}. Rather than storing the final text,
+Collabrador's text editor saves a description of the
+\textbf{operations} performed by the user. These operations are
+inserting a character at a given position (\texttt{INSERT}), deleting
+a character at a given position (\texttt{DELETE}), and using cut/paste
+to move a block of text from one position to another (\texttt{MOVE});
+collectively, these operations form an \textbf{operational
+  transformation} describing how the user modified the initial
+document. When the user clicks the ``save'' button, Collabrador
+creates a \textbf{checkpoint} containing this operational
+transformation and saves it into the local \textbf{checkpoint
+  database}. [TODO: cite OT paper] [TODO: think about whether the user
+should explicitly click ``save'' or if this should happen in the
+background]
 
-To be more specific, the checkpoint database is a dynamic perfect hash table of \textbf{checkpoint objects}, keyed by the SHA-1 hash of the object. A checkpoint object is a data structure encapsulating the details of the operational transformation performed by that edit, the hashes of the edit's parent or parents, the hash of the unique checkpoint to be used as the base of the operational transformation, and the \textbf{user visibility list}, which is just the list of users that have locally stored this checkpoint. We will assume that SHA-1 has no collisions, so two checkpoints will have the same hash if and only if they perform the same changes to the same base from the same parents.
+To be more specific, the checkpoint database is a dynamic perfect hash
+table of \textbf{checkpoint objects}, keyed by the SHA-1 hash of the
+object. A checkpoint object is a data structure encapsulating the
+details of the operational transformation performed by that edit, the
+hashes of the edit's parent or parents, the hash of the unique
+checkpoint to be used as the base of the operational transformation,
+and the \textbf{user visibility list}, which is just the list of users
+that have locally stored this checkpoint. We will assume that SHA-1
+has no collisions, so two checkpoints will have the same hash if and
+only if they perform the same changes to the same base from the same
+parents.
 
-When the system consists of a single computer, the checkpoint database is just a linear progression of checkpoints. Adding in multiple computers, a hypothetical central server keeping track of edits on all computers would model the checkpoint database as a directed tree, with a branching node occurring whenever two computers make distinct edits. If two computers are allowed to synchronize with each other, then branches of this tree can join together (creating nodes with two parents instead of just one) and so the checkpoint database becomes a directed acyclic graph instead. The challenge with Collabrador is to maintain this directed acyclic graph in a distributed fashion because there is no central server. Collabrador's solution is for each user to store in its local checkpoint database only the portion of the graph that it knows about while a synchronization process in the background lets users constantly communicate with each other to share and exchange parts of the graph.
+When the system consists of a single computer, the checkpoint database
+is just a linear progression of checkpoints. Adding in multiple
+computers, a hypothetical central server keeping track of edits on all
+computers would model the checkpoint database as a directed tree, with
+a branching node occurring whenever two computers make distinct
+edits. If two computers are allowed to synchronize with each other,
+then branches of this tree can join together (creating nodes with two
+parents instead of just one) and so the checkpoint database becomes a
+directed acyclic graph instead. The challenge with Collabrador is to
+maintain this directed acyclic graph in a distributed fashion because
+there is no central server. Collabrador's solution is for each user to
+store in its local checkpoint database only the portion of the graph
+that it knows about while a synchronization process in the background
+lets users constantly communicate with each other to share and
+exchange parts of the graph.
 
-At most times, a user's checkpoint database will be a graph with only a single leaf node, representing the most recent checkpoint created by the user. A database with just one leaf node is in the \textbf{merged} state. When synchronizing with another user, that user's checkpoint objects will be copied into the local checkpoint database, causing the graph to have two leaf nodes. A database with two leaf nodes is in the \textbf{unmerged} state. Then, as described in [TODO: cite the other section], the Collabrador merge algorithm will find the least common ancestor of these leaves, merge the two edits into a single checkpoint, and then save this checkpoint into the database as a node with two parents and an operational transformation relative to the least common ancestor.
+At most times, a user's checkpoint database will be a graph with only
+a single leaf node, representing the most recent checkpoint created by
+the user. A database with just one leaf node is in the \textbf{merged}
+state. When synchronizing with another user, that user's checkpoint
+objects will be copied into the local checkpoint database, causing the
+graph to have two leaf nodes. A database with two leaf nodes is in the
+\textbf{unmerged} state. Then, as described in [TODO: cite the other
+section], the Collabrador merge algorithm will find the least common
+ancestor of these leaves, merge the two edits into a single
+checkpoint, and then save this checkpoint into the database as a node
+with two parents and an operational transformation relative to the
+least common ancestor.
 
 \subsection{Sync algorithm}
 
-The process for \textbf{synchronizing} the checkpoint databases of two computers is straightforward. One computer, the \emph{initiator}, sends a request to the other computer, the \emph{provider}, asking for the hash of the leaf node in its checkpoint database. If this checkpoint is already in the initiator's database, then both the initiator and provider are added to the checkpoint's user visibility list (if they weren't already included), and then the synchronization proceeds to the second stage of synchronization, in which the initiator sends its entire database to the provider using a similar process. Otherwise, the initiator asks for the full checkpoint object of this leaf, and then recursively requests the checkpoint objects corresponding to its parents until the initiator has incorporated the provider's entire checkpoint database. At this point, the initiator runs the merge algorithm, sets the resulting checkpoint's user visibility list to contain only the initiator and provider, and then proceeds to the second stage of synchronization.
+The process for \textbf{synchronizing} the checkpoint databases of two
+computers is straightforward. One computer, the \emph{initiator},
+sends a request to the other computer, the \emph{provider}, asking for
+the hash of the leaf node in its checkpoint database. If this
+checkpoint is already in the initiator's database, then both the
+initiator and provider are added to the checkpoint's user visibility
+list (if they weren't already included), and then the synchronization
+proceeds to the second stage of synchronization, in which the
+initiator sends its entire database to the provider using a similar
+process. Otherwise, the initiator asks for the full checkpoint object
+of this leaf, and then recursively requests the checkpoint objects
+corresponding to its parents until the initiator has incorporated the
+provider's entire checkpoint database. At this point, the initiator
+runs the merge algorithm, sets the resulting checkpoint's user
+visibility list to contain only the initiator and provider, and then
+proceeds to the second stage of synchronization.
 
-When there are more than two computers, Collabrador has them synchronize in a pairwise fashion. The implementation of Collabrador assumes that each user can query for the set of all users currently on the network. Every computer has a background process that, at random intervals, sends a request to another computer asking if it is willing to synchronize. The two conditions under which a computer will refuse a request are if it is waiting for a response from any computer about synchronizing (up to some time-out), or if it is currently synchronizing. When two computers agree to synchronize, the computer that initiated the request will play the role of initiator and the other computer will be the provider. When this process finishes, the initiator will wait another random interval and then send a request to the user currently on the network with the next-lowest IP address in a round-robin process. After a quadratic number of pairwise synchronizations, all computers in the network will converge on the same checkpoint database.
+When there are more than two computers, Collabrador has them
+synchronize in a pairwise fashion. The implementation of Collabrador
+assumes that each user can query for the set of all users currently on
+the network. Every computer has a background process that, at random
+intervals, sends a request to another computer asking if it is willing
+to synchronize. The two conditions under which a computer will refuse
+a request are if it is waiting for a response from any computer about
+synchronizing (up to some time-out), or if it is currently
+synchronizing. When two computers agree to synchronize, the computer
+that initiated the request will play the role of initiator and the
+other computer will be the provider. When this process finishes, the
+initiator will wait another random interval and then send a request to
+the user currently on the network with the next-lowest IP address in a
+round-robin process. After a quadratic number of pairwise
+synchronizations, all computers in the network will converge on the
+same checkpoint database.
 
-Additionally, whenever two computers synchronize, they also exchange their \textbf{known user lists}. All users, whether online or offline, are included. The purpose of this exchange is so that all users collectively can determine the exact group membership, even if users are dynamically joining the group. This does not, however, support users dynamically leaving the group.
+Additionally, whenever two computers synchronize, they also exchange
+their \textbf{known user lists}. All users, whether online or offline,
+are included. The purpose of this exchange is so that all users
+collectively can determine the exact group membership, even if users
+are dynamically joining the group. This does not, however, support
+users dynamically leaving the group.
 
 \subsection{Merge algorithm}
 
@@ -66,7 +170,8 @@ defines a transformation on character indices (although this
 transformation need not be injective or surjective), and all OTs are
 invertible.  A full formal description of OTs is given in \cite{wave}.
 
-OTs can interact in several ways, which are shown in figure \ref{fig:ot}:
+OTs can interact in several ways, which are shown in figure
+\ref{fig:ot}:
 \begin{itemize}
 \item Any number of OTs that are generated sequentially may be
   composed into a single OT representing the combined effect.  We can
@@ -142,12 +247,12 @@ subsequent non-conflicting changes.  An example is shown in figure
         Z(X) &=& move(5, 8, 0) \circ move(0, 3, 11)
       \end{eqnarray*}
       We would merge the users' changes as follows: \[(X(Z) \circ
-      X)(A) = (Z(X) \circ Z)(A) = \mathrm{outside\_ixn}.\]
-      This process is formally described in \cite{ot}.
+      X)(A) = (Z(X) \circ Z)(A) = \mathrm{outside\_ixn}.\] This
+      process is formally described in \cite{ot}.
       \subsection*{Merge conflict}
       The quantities \((Y \circ X)(Z)\) and \(Z(Y \circ X)\) are not
-      defined.  Both transformations of indices fail because there
-      are conflicting changes.
+      defined.  Both transformations of indices fail because there are
+      conflicting changes.
     \end{multicols}
   \end{minipage}
   \caption{Operational transform examples.}
@@ -218,13 +323,48 @@ fault-tolerance guarantees.  One such candidate is PostgreSQL
 
 \subsection{Checkpoints}
 
-In order to support named checkpoints, known as \textbf{commits}, Collabrador needs one additional data structure. Each user should store a hash table mapping names to checkpoint hashes. With this data structure, the algorithm for returning a specific named version of a document is as easy as looking up the hash associated with the name, and then looking up the checkpoint object associated with that hash.
+In order to support named checkpoints, known as \textbf{commits},
+Collabrador needs one additional data structure. Each user should
+store a hash table mapping names to checkpoint hashes. With this data
+structure, the algorithm for returning a specific named version of a
+document is as easy as looking up the hash associated with the name,
+and then looking up the checkpoint object associated with that hash.
 
-The process for creating a commit is mostly the same as the process for creating an unnamed checkpoint. The only difference is that, during the synchronization process, users also exchange the name of the checkpoint and its associated hash. If the initiator successfully synchronizes with all users on the network, the initiator's leaf node is the same hash as at the start of the process, and the leaf node's user visibility list exactly equals the computer's known user list, then the commit is successful. If any of these conditions are not met within a pre-set number of passes through the synchronization round-robin, the commit fails.
+The process for creating a commit is mostly the same as the process
+for creating an unnamed checkpoint. The only difference is that,
+during the synchronization process, users also exchange the name of
+the checkpoint and its associated hash. If the initiator successfully
+synchronizes with all users on the network, the initiator's leaf node
+is the same hash as at the start of the process, and the leaf node's
+user visibility list exactly equals the computer's known user list,
+then the commit is successful. If any of these conditions are not met
+within a pre-set number of passes through the synchronization
+round-robin, the commit fails.
 
-The specifications of the Collabrador system ensure that a successful run of the commit algorithm guarantees correctness of the process. Evidently, all users in the user visibility list have the committed version and associated commit name stored locally. Additionally, the initiator's user visibility list must necessarily contain all members of the group (even ones who dynamically joined) because the synchronization process added all users' user visibility lists to the initiator's. The only possible failure mode is if there is a new user who has never joined the same network as a pre-existing user, but this new user can be safely disregarded because it has never had the chance to obtain any version of the document, much less modify it.
+The specifications of the Collabrador system ensure that a successful
+run of the commit algorithm guarantees correctness of the
+process. Evidently, all users in the user visibility list have the
+committed version and associated commit name stored
+locally. Additionally, the initiator's user visibility list must
+necessarily contain all members of the group (even ones who
+dynamically joined) because the synchronization process added all
+users' user visibility lists to the initiator's. The only possible
+failure mode is if there is a new user who has never joined the same
+network as a pre-existing user, but this new user can be safely
+disregarded because it has never had the chance to obtain any version
+of the document, much less modify it.
 
-Finally, it is worth noting what happens in the case of a failed commit. Imagine trying to commit a version named ``final'' and it fails, and then trying again. If a user in the system is asked for the version ``final'' before the second commit finishes, there is no guarantee as to what version of the document it will return. To avoid this problem, Collabrador requires that no two commit attempts use the same name. Because some users may not know the names of all failed commits, this restriction is enforced in practice, not in software. In other words, the human user needs to know that trying the same name twice can lead to undesirable results, but there are no software safeguards to prevent this situation from occurring.
+Finally, it is worth noting what happens in the case of a failed
+commit. Imagine trying to commit a version named ``final'' and it
+fails, and then trying again. If a user in the system is asked for the
+version ``final'' before the second commit finishes, there is no
+guarantee as to what version of the document it will return. To avoid
+this problem, Collabrador requires that no two commit attempts use the
+same name. Because some users may not know the names of all failed
+commits, this restriction is enforced in practice, not in software. In
+other words, the human user needs to know that trying the same name
+twice can lead to undesirable results, but there are no software
+safeguards to prevent this situation from occurring.
 
 \section{Analysis}
 
@@ -244,8 +384,7 @@ TODO by colleen
 
 TODO by colleen
 
-\bibliographystyle{IEEEtran}
-\bibliography{IEEEabrv,dp2}
+\bibliographystyle{IEEEtran} \bibliography{IEEEabrv,dp2}
 
 TODO WORDCOUNT words
 
