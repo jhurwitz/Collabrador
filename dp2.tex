@@ -73,17 +73,18 @@ creates a \textbf{checkpoint} containing this operational
 transformation and saves it into the local \textbf{checkpoint
   database}. [TODO: cite OT paper]
 
-To be more specific, the checkpoint database is a dynamic perfect hash
-table of \textbf{checkpoint objects}, keyed by the SHA-1 hash of the
-object. A checkpoint object is a data structure encapsulating the
-details of the operational transformation performed by that edit, the
-hashes of the edit's parent or parents, the hash of the unique
-checkpoint to be used as the base of the operational transformation,
-and the \textbf{user visibility list}, which is just the list of users
-that have locally stored this checkpoint. We will assume that SHA-1
-has no collisions, so two checkpoints will have the same hash if and
-only if they perform the same changes to the same base from the same
-parents.
+To be more specific, Collabrador stores a checkpoint database
+consisting of \textbf{checkpoint objects}, keyed by the SHA-1 hash of
+the object. For full implementation details, see
+Section~\ref{sec:storage-dag}. A checkpoint object is a data structure
+encapsulating the details of the operational transformation performed
+by that edit, the hashes of the edit's parent or parents, the hashes
+of the edit's children, the hash of the unique checkpoint to be used
+as the base of the operational transformation, and the \textbf{user
+  visibility list}, which is just the list of users that have locally
+stored this checkpoint. We will assume that SHA-1 has no collisions,
+so two checkpoints will have the same hash if and only if they perform
+the same changes to the same base from the same parents.
 
 When the system consists of a single computer, the checkpoint database
 is just a linear progression of checkpoints. Adding in multiple
@@ -336,6 +337,7 @@ subsequent non-conflicting changes.  An example is shown in figure
 \end{figure}
 
 \subsection{Storage of the DAG}
+\label{sec:storage-dag}
 
 The system used by clients to store the DAG of document versions must
 meet performance and reliability requirements.
