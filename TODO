@@ -1,10 +1,7 @@
 *Need to define conflict, particularly wrt OTs
-*typo in fig 1
 *if we don’t store the text, do we reconstruct the document every time? what’s up with that? (2.1)
-*is there a valid reason for wanting two documents with the same text to hash to a different version?
 *diagram of example sync with 3 users
 *explain that OT contains merge conflict resolution
 *design flaw: reconstructing document from OTs can be slow (but only need to do this when you first open it)
 *be consistent about saying computer/user/"instance of Collabrador"
 *add more citations
-*finish TeXifying 3.1
