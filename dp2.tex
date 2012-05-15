@@ -1,6 +1,6 @@
 \documentclass[11pt,titlepage]{article}
 \usepackage[margin=1in]{geometry}
-\usepackage{graphicx, url, float, multicol}
+\usepackage{amsmath,graphicx, url, float, multicol}
 \floatstyle{boxed}
 \restylefloat{figure}
 
@@ -416,9 +416,7 @@ subsequent non-conflicting changes.  An example is shown in figure
 
 \section{Analysis}
 
-\subsection{Use cases and failure analysis}
-
-This section discusses a few use cases.
+\subsection{Use cases}
 
 \emph{Two users, Alice and Bob, add lots of text to the document in
   different paragraphs, and also make different changes to a single
@@ -426,28 +424,40 @@ This section discusses a few use cases.
   other, your design must not require resolving conflicts for the
   changes to different paragraphs.}
 
+\vspace{5mm}
+
 Alice and Bob will not have to resolve conflicts when the change the
 document in different paragraphs. For example, if transform $U =
-insert(12, \mathrm{`a whole bunch of text'})$ represents Bob adding
-text to paragraph one, and $V = insert(422, \mathrm{`more text
+insert(12, \text{`a whole bunch of text'})$ represents Bob adding
+text to paragraph one, and $V = insert(422, \text{`more text
   here!'})$ represents Alice adding text to paragraph two, the
-resulting merge would be $U(V)\circ U = insert(434, \mathrm{`more text
-  here!'})\circ insert(12, \mathrm{`a whole bunch of text'})$ or
-$V(U)\circ V = insert(12, \mathrm{`a whole bunch of text'})\circ
-insert(422, \mathrm{`more text here!'})$.  When Alice and Bob modify
+resulting merge would be
+\begin{equation*}
+U(V)\circ U = insert(434, \text{`more text
+  here!'})\circ insert(12, \text{`a whole bunch of text'})\text{, or}
+\end{equation*}
+\begin{equation*}
+V(U)\circ V = insert(12, \text{`a whole bunch of text'})\circ
+insert(422, \text{`more text here!'}).
+\end{equation*}
+When Alice and Bob modify
 the same sentence, with Alice's changes represented as $X$ and Bob's
 changes represented as $Y$, their changes will require conflict
 resolution if $X(Y)$ tries to compose two OTs that operate on the same
 index (see Figure~\ref{fig:merge}). Otherwise, the conflict will be
 automatically resolved as before.
 
+\vspace{5mm}
+\noindent
 \emph{Two users, Alice and Bob, are connected to each other, and Bob
   makes a change to a sentence. Concurrently, an offline user,
   Charlie, changes that same sentence in a different way. Alice goes
   offline but later meets Charlie, at which point they synchronize,
   detect the conflict, and Alice resolves the conflict. At a later
   point, Charlie meets Bob and synchronizes with him.}
-  
+
+\vspace{5mm}  
+
 After Alice and Charlie meet, Charlie's graph contains the conflict
 resolution.  When Charlie and Bob meet, the merge algorithm detects
 that Bob's DAG is a sub-graph of Charlie's, so Bob's document and DAG
@@ -455,33 +465,46 @@ can be updated to be identical to Charlie's.  See Image.
 
 TODO Image: Conflict resolution between Alice, Charlie and Bob.
 
+\vspace{5mm}
+\noindent
 \emph{One user, Alice, moves several paragraphs from one section of
   the paper to another, but does not change the contents of those
   paragraphs. Concurrently, another user, Bob, who is offline, edits a
   sentence in one of those paragraphs.}
 
+\vspace{5mm}
+
 When Alice and Bob meet, no conflict resolution will be
-required. Alice's OTs are X = move(12,422, 1022), etc.  The OT of
-Bob's changes is Y = insert(222, `spurious text generation'). When Bob
+required. Alice's OTs are $X = move(12,422, 1022)$, etc.  The OT of
+Bob's changes is $Y = insert(222, `spurious text generation')$. When Bob
 meets Alice, his Collabrador client will synchronize with her, and
-merge their text. The resulting transform will be Y(X)*X = insert(822,
-`spurious text generation')*move(12,422, 1022). The index 822 is
-determined like so: Index 1022 becomes index 612, because
+merge their text. The resulting transform will be 
+\begin{equation*}
+Y(X) \circ X = insert(822,
+\text{`spurious text generation'}) \circ move(12,422, 1022)
+\end{equation*}
+The index 822 is determined like so: index 1022 becomes index 612 because
 1022-(422-12) = 612.  The original insert, at location 222, is 210
 indices away from what is now index 612.  612+210 = 822. An equivalent
-result can be achieved from X(Y)*X =
-move(12,448,1048)*insert(222,`spurious text generation'), where the
-new\_loc and end\_index have been incremented by 24 (the number of
+result can be achieved by
+\begin{equation*}
+X(Y) \circ X = move(12,448,1048) \circ insert(222,`spurious text generation')
+\end{equation*}
+where the \textit{new\_loc} and \textit{end\_index} have been incremented by 24 (the number of
 characters in the inserted string).
 
+\vspace{5mm}
+\noindent
 \emph{Two users, while not connected to each other, find a spelling
   mistake and correct the same word in the same way.}
+
+\vspace{5mm}
 
 Since the two versions have the same parent, change log and content,
 the hashes will be the same, and they will be recognized as the same
 version, making conflict resolution unnecessary.
 
-\subsubsection{Failures}
+\subsection{Failures}
 
 Each Collabrador client keeps the list of users associated with a
 document, and tracks whether or not they are reachable. A commit
