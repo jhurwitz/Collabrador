@@ -94,7 +94,8 @@ a branching node occurring whenever two computers make distinct
 edits. If two computers are allowed to synchronize with each other,
 then branches of this tree can join together (creating nodes with two
 parents instead of just one) and so the checkpoint database becomes a
-directed acyclic graph (DAG) instead. (For this reason, this paper
+directed acyclic graph (DAG) instead, where the nodes are checkpoint objects,
+and the edges are OTs.  (For this reason, this paper
 uses the terms \textbf{checkpoint database} and \textbf{DAG}
 interchangeably.)  The challenge with Collabrador is to maintain this
 DAG in a distributed fashion because there is no central
@@ -139,14 +140,21 @@ store the DAG in a database that is designed specifically to provide
 fault-tolerance guarantees.  One such candidate is PostgreSQL
 \cite{postgres}.
 
-\subsubsection{Checkpoints}
+\subsubsection{Named Checkpoints}
 
 In order to support named checkpoints, known as \textbf{commits},
 Collabrador needs one additional data structure. Each user should
-store a hash table mapping names to checkpoint hashes. With this data
-structure, the algorithm for returning a specific named version of a
-document is as easy as looking up the hash associated with the name,
+store a hash table mapping user-defined names to checkpoint hashes. 
+With this data structure, the algorithm for returning a specific named
+version of a document is as easy as looking up the hash associated with the name,
 and then looking up the checkpoint object associated with that hash.
+
+One key difference between a checkpoint and a commit is that a commit 
+requires all users to have the node associated with the commit in their
+DAG. In other words, all clients need to explicity agree on which document 
+version corresponds to a particular name. This condition is met once the
+visibility list for a named checkpoint contains all users associated with
+a document.
 
 The process for creating a commit is mostly the same as the process
 for creating an unnamed checkpoint. The only difference is that,
@@ -243,13 +251,14 @@ synchronize in a pairwise fashion. The implementation of Collabrador
 assumes that each user can query for the set of all users currently on
 the network. Every computer has a background process that, at random
 intervals, sends a request to another computer asking if it is willing
-to synchronize. The two conditions under which a computer will refuse
+to synchronize.  The two conditions under which a computer will refuse
 a request are if it is waiting for a response from any computer about
 synchronizing (up to some time-out), or if it is currently
-synchronizing. When two computers agree to synchronize, the computer
+synchronizing. Syncronization also ocurrs when a user saves or initiates
+a named checkpoint. When two computers agree to synchronize, the computer
 that initiated the request will play the role of initiator and the
 other computer will be the provider. When this process finishes, the
-initiator will wait another random interval and then send a request to
+initiator will wait a random interval and then send a request to
 the user currently on the network with the next-lowest IP address in a
 round-robin process. After a quadratic number of pairwise
 synchronizations, all computers in the network will converge on the
