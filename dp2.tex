@@ -450,19 +450,19 @@ TODO Image: Conflict resolution between Alice, Charlie and Bob.
 
 When Alice and Bob meet, no conflict resolution will be
 required. Alice's OTs are $X = move(12,422, 1022)$, etc.  The OT of
-Bob's changes is $Y = insert(222, `spurious text generation')$. When Bob
+Bob's changes is $Y = insert(222, \text{``spurious text generation"})$. When Bob
 meets Alice, his Collabrador client will synchronize with her, and
 merge their text. The resulting transform will be 
 \begin{equation*}
 Y(X) \circ X = insert(822,
-\text{`spurious text generation'}) \circ move(12,422, 1022)
+\text{``spurious text generation"}) \circ move(12,422, 1022)
 \end{equation*}
-The index 822 is determined like so: index 1022 becomes index 612 because
-1022-(422-12) = 612.  The original insert, at location 222, is 210
-indices away from what is now index 612.  612+210 = 822. An equivalent
+The index 822 is determined as follows: index 1022 becomes index 612 because
+\(1022-(422-12) = 612.\)  The original insert, at location 222, is 210
+indices away from what is now index 612, and \(612+210 = 822.\) An equivalent
 result can be achieved by
 \begin{equation*}
-X(Y) \circ X = move(12,448,1048) \circ insert(222,`spurious text generation')
+X(Y) \circ X = move(12,448,1048) \circ insert(222, \text{``spurious text generation"})
 \end{equation*}
 where the \textit{new\_loc} and \textit{end\_index} have been incremented by 24 (the number of
 characters in the inserted string).
@@ -512,7 +512,11 @@ have to worry about data corruption at the application layer.
 
 \subsection{Performance}
 
-TODO by dlaw and jhurwitz
+\subsubsection{Performance of the sync algorithm}
+
+
+\subsubsection{Performance of the merge algorithm}
+
 
 \subsection{Design Tradeoffs and Flaws}
 
