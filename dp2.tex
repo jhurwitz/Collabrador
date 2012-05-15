@@ -59,26 +59,26 @@ approve the resulting document before the commit is finalized.
 
 \subsection{System architecture}
 
-On each computer, Collabrador consists of a \textbf{text editor} and a
-\textbf{checkpoint database}. In addition to storing the text,
+On each computer, Collabrador consists of a \emph{text editor} and a
+\emph{checkpoint database}. In addition to storing the text,
 Collabrador's text editor saves a description of the
-\textbf{operations} performed by the user. These operations are
-inserting a character at a given position (\texttt{INSERT}), deleting
-a character at a given position (\texttt{DELETE}), and using cut/paste
-to move a block of text from one position to another (\texttt{MOVE});
-collectively, these operations form an \textbf{operational
+\emph{operations} performed by the user. These operations are
+inserting a character at a given position (\emph{insert}), deleting
+a character at a given position (\emph{delete}), and using cut/paste
+to move a block of text from one position to another (\emph{move});
+collectively, these operations form an \emph{operational
   transformation} describing how the user modified the initial
 document. When the user clicks the ``save'' button, Collabrador
-creates a \textbf{checkpoint} containing this operational
-transformation and saves it into the local \textbf{checkpoint
+creates a \emph{checkpoint} containing this operational
+transformation and saves it into the local \emph{checkpoint
   database}. [TODO: cite OT paper]
 
 To be more specific, Collabrador stores a checkpoint database
-consisting of \textbf{checkpoint objects}. A checkpoint object is a data structure
+consisting of \emph{checkpoint objects}. A checkpoint object is a data structure
 encapsulating the details of the operational transformation performed
 by that edit, the hashes of the edit's parent or parents, the hashes
 of the edit's children, the hash of the unique checkpoint to be used
-as the base of the operational transformation, and the \textbf{user
+as the base of the operational transformation, and the \emph{user
   visibility list}, which is just the list of users that have locally
 stored this checkpoint. Checkpoint objects are keyed by the SHA-1 hash of
 the object itself. For full implementation details, see
@@ -96,7 +96,7 @@ then branches of this tree can join together (creating nodes with two
 parents instead of just one) and so the checkpoint database becomes a
 directed acyclic graph (DAG) instead, where the nodes are checkpoint objects,
 and the edges are OTs.  (For this reason, this paper
-uses the terms \textbf{checkpoint database} and \textbf{DAG}
+uses the terms \emph{checkpoint database} and \emph{DAG}
 interchangeably.)  The challenge with Collabrador is to maintain this
 DAG in a distributed fashion because there is no central
 server. Collabrador's solution is %for each user to store in its local
@@ -109,11 +109,11 @@ in-order packet delivery.
 The checkpoint database can be in two states. At most times, a user's 
 checkpoint database will be a graph with only a single leaf node, 
 representing the most recent checkpoint created by the user. 
-A database with just one leaf node is in the \textbf{merged}
+A database with just one leaf node is in the \emph{merged}
 state. When synchronizing with another user, that user's checkpoint
 objects will be copied into the local checkpoint database, causing the
 graph to have two leaf nodes. A database with two leaf nodes is in the
-\textbf{unmerged} state. Then, as described in
+\emph{unmerged} state. Then, as described in
 Section~\ref{sec:merge}, the Collabrador merge algorithm will find the
 least common ancestor of these leaves, merge the two edits into a
 single checkpoint, and then save this checkpoint into the database as
@@ -142,7 +142,7 @@ fault-tolerance guarantees.  One such candidate is PostgreSQL
 
 \subsubsection{Named Checkpoints}
 
-In order to support named checkpoints, known as \textbf{commits},
+In order to support named checkpoints, known as \emph{commits},
 Collabrador needs one additional data structure. Each user should
 store a hash table mapping user-defined names to checkpoint hashes. 
 With this data structure, the algorithm for returning a specific named
@@ -191,7 +191,7 @@ safeguards to prevent this situation from occurring.
 
 \subsection{Sync algorithm}
 
-\textbf{Synchronization} is a process which causes two computers with 
+\emph{Synchronization} is a process which causes two computers with 
 unique checkpoint databases to converge to a single checkpoint database. 
 Each machine must begin and end with a checkpoint database in the merged 
 state. The computer that initiates the synchronization
@@ -262,7 +262,7 @@ synchronizations, all computers in the network will converge on the
 same checkpoint database.
 
 Additionally, whenever two computers synchronize, they also exchange
-their \textbf{known user lists}. All users, whether online or offline,
+their \emph{known user lists}. All users, whether online or offline,
 are included. The purpose of this exchange is so that all users
 collectively can determine the exact group membership, even if users
 are dynamically joining the group. Collabrador does not, however,
