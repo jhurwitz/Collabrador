@@ -45,7 +45,7 @@ collectively, these operations form an \emph{operational
 document. When the user clicks the ``save'' button, Collabrador
 creates a \emph{checkpoint} containing this operational
 transformation and saves it into the local \emph{checkpoint
-  database}. [TODO: cite OT paper]
+  database} \cite{ot}.
 
 To be more specific, Collabrador stores a checkpoint database
 consisting of \emph{checkpoint objects}. A checkpoint object is a data structure
@@ -517,6 +517,11 @@ have to worry about data corruption at the application layer.
 
 \subsubsection{Performance of the merge algorithm}
 
+The time taken by the merge algorithm grows linearly with the 
+
+scales linearly with number of primitives
+
+can be mitigated with commits, caching, and efficient repacking of complex OTs
 
 \subsection{Design Tradeoffs and Flaws}
 
@@ -528,7 +533,7 @@ Collabrador is distributed, synchronizations are pairwise, making the
 sync algorithm quadratic with respect to the number of users. A
 centralized server would have asymptotically linear synchronization.
 
-Many collaborative editors use version vectors: a vector of version 
+Some collaborative editors use version vectors: a vector of version numbers
 corresponding to each user. For example, V = (1, 2, 2) means that the first
 user has version 1 of the document, and the other two have the second version.
 This is a compact and nifty way to represent version data. V1 is newer than V2
@@ -572,6 +577,6 @@ solved include dynamic membership and adding an authentication system.
 
 \bibliographystyle{IEEEtran} \bibliography{IEEEabrv,dp2}
 
-TODO WORDCOUNT words
+4622 words
 
 \end{document}
