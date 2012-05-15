@@ -149,12 +149,21 @@ With this data structure, the algorithm for returning a specific named
 version of a document is as easy as looking up the hash associated with the name,
 and then looking up the checkpoint object associated with that hash.
 
-One key difference between a checkpoint and a commit is that a commit 
-requires all users to have the node associated with the commit in their
-DAG. In other words, all clients need to explicity agree on which document 
-version corresponds to a particular name. This condition is met once the
-visibility list for a named checkpoint contains all users associated with
-a document.
+One key difference between a checkpoint and a commit is that eventually, 
+all users in the user visibility list have the
+committed version and associated commit name stored
+locally. Additionally, the initiator's user visibility list must
+necessarily contain all members of the group (even ones who
+dynamically joined) because the synchronization process added all
+users' user visibility lists to the initiator's. In other words,
+all users must explicitly agree on which version of the document that
+a particular name corresponds to. 
+The specifications of the Collabrador system ensure that a successful
+run of the commit algorithm guarantees correctness of the
+process. The only possible failure mode is if there is a new user
+ who has never joined the same network as a pre-existing user, 
+but this new user can be safely disregarded because it has never 
+had the chance to obtain any version of the document, much less modify it.
 
 The process for creating a commit is mostly the same as the process
 for creating an unnamed checkpoint. The only difference is that,
@@ -167,18 +176,6 @@ then the commit is successful. If any of these conditions are not met
 within a pre-set number of passes through the synchronization
 round-robin, the commit fails.
 
-The specifications of the Collabrador system ensure that a successful
-run of the commit algorithm guarantees correctness of the
-process. Evidently, all users in the user visibility list have the
-committed version and associated commit name stored
-locally. Additionally, the initiator's user visibility list must
-necessarily contain all members of the group (even ones who
-dynamically joined) because the synchronization process added all
-users' user visibility lists to the initiator's. The only possible
-failure mode is if there is a new user who has never joined the same
-network as a pre-existing user, but this new user can be safely
-disregarded because it has never had the chance to obtain any version
-of the document, much less modify it.
 
 Finally, it is worth noting what happens in the case of a failed
 commit. Imagine trying to commit a version named ``final'' and it
