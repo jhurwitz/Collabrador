@@ -287,7 +287,7 @@ Figure~\ref{fig:ot}:
 \item When two OTs are performed simultaneously, we may use one OT to
   transform the character indices of the second OT, and compose the
   result with the first OT.  This process is commutative when there
-  are no conflicts.
+  are no conflicting changes.
 \end{itemize}
 
 When the merge algorithm takes over, the sync algorithm has copied
@@ -309,6 +309,13 @@ simpler.)  When conflicting changes are identified, they are flagged
 for manual resolution, but the algorithm continues to resolve
 subsequent non-conflicting changes.  An example is shown in
 Figure~\ref{fig:merge}.
+
+Conflicting changes are defined by the behavior of index
+transformations: two OTs conflict if and only if one applied to the
+other is undefined.  For example, an insertion of one character at
+index 22 conflicts only with another operation at index 22, since the
+index transformation is defined as follows:
+\[ index(n) = \begin{cases} n & n < 22 \\ n+1 & n > 22 \\ \text{undefined} & n = 22 \end{cases}. \]
 
 \begin{figure}[h]
   \centering
