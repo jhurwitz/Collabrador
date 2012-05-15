@@ -1,6 +1,7 @@
 \documentclass[11pt,titlepage]{article}
 \usepackage[margin=1in]{geometry}
-\usepackage{amsmath,graphicx, url, float, multicol}
+\usepackage[all]{xy}
+\usepackage{amsmath, graphicx, url, float, multicol}
 \floatstyle{boxed}
 \restylefloat{figure}
 
@@ -184,7 +185,74 @@ initiator will wait a random interval and then send a request to
 the user currently on the network with the next-lowest IP address in a
 round-robin process. After a quadratic number of pairwise
 synchronizations, all computers in the network will converge on the
-same checkpoint database.
+same checkpoint database. Figure~\ref{fig:sync-ex} shows an example of this process.
+
+\begin{figure}[p]
+\centering
+\begin{tabular}{ccc}
+User 1 & User 2 & User 3
+\\&&\\
+\xymatrix{
+A\ar[d] \\
+B\ar[d] \\
+C\ar[d] \\
+D}
+&
+\xymatrix{
+A\ar[d] \\
+E\ar[d] \\
+F}
+&
+\xymatrix{
+A\ar[d] \\
+E\ar[d] \\
+G}
+\\&&\\
+\xymatrix{
+& A\ar[dl]\ar[dr] & \\
+B\ar[d] && E\ar[d] \\
+C\ar[d] && F\ar[ddl] \\
+D\ar[dr] && \\
+& H & }
+&
+\xymatrix{
+& A\ar[dl]\ar[dr] & \\
+B\ar[d] && E\ar[d] \\
+C\ar[d] && F\ar[ddl] \\
+D\ar[dr] && \\
+& H & }
+&
+\xymatrix{
+A\ar[d] \\
+E\ar[d] \\
+G}
+\\&&\\
+\xymatrix{
+& A\ar[dl]\ar[dr] && \\
+B\ar[d] && E\ar[d]\ar[dddr] & \\
+C\ar[d] && F\ar[ddl] & \\
+D\ar[dr] &&& \\
+& H\ar[dr] && G\ar[dl] \\
+&& I & }
+&
+\xymatrix{
+& A\ar[dl]\ar[dr] & \\
+B\ar[d] && E\ar[d] \\
+C\ar[d] && F\ar[ddl] \\
+D\ar[dr] && \\
+& H & }
+&
+\xymatrix{
+& A\ar[dl]\ar[dr] && \\
+B\ar[d] && E\ar[d]\ar[dddr] & \\
+C\ar[d] && F\ar[ddl] & \\
+D\ar[dr] &&& \\
+& H\ar[dr] && G\ar[dl] \\
+&& I & }
+\end{tabular}
+\caption{This figure shows the checkpoint databases of three users. They initially have distinct versions of the document (labelled $D$, $F$, and $G$). The second row of the figure is the result of user 1 and user 2 synchronizing and then merging to form document $H$, and then the third row is the result of user 1 and user 3 synchronizing and then merging to form document $I$.}
+\label{fig:sync-ex}
+\end{figure}
 
 Additionally, whenever two computers synchronize, they also exchange
 their \emph{known user lists}. All users, whether online or offline,
