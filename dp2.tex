@@ -1,6 +1,7 @@
 \documentclass[11pt,titlepage]{article}
 \usepackage[margin=1in]{geometry}
-\usepackage{amsmath,graphicx, url, float, multicol}
+\usepackage[all]{xy}
+\usepackage{amsmath, graphicx, url, float, multicol}
 \floatstyle{boxed}
 \restylefloat{figure}
 
@@ -33,26 +34,26 @@ and is the basis for all major collaborative editors.
 
 \subsection{System architecture}
 
-On each computer, Collabrador consists of a \textbf{text editor} and a
-\textbf{checkpoint database}. In addition to storing the text,
+On each computer, Collabrador consists of a \emph{text editor} and a
+\emph{checkpoint database}. In addition to storing the text,
 Collabrador's text editor saves a description of the
-\textbf{operations} performed by the user. These operations are
-inserting a character at a given position (\texttt{INSERT}), deleting
-a character at a given position (\texttt{DELETE}), and using cut/paste
-to move a block of text from one position to another (\texttt{MOVE});
-collectively, these operations form an \textbf{operational
+\emph{operations} performed by the user. These operations are
+inserting a character at a given position (\emph{insert}), deleting
+a character at a given position (\emph{delete}), and using cut/paste
+to move a block of text from one position to another (\emph{move});
+collectively, these operations form an \emph{operational
   transformation} describing how the user modified the initial
 document. When the user clicks the ``save'' button, Collabrador
-creates a \textbf{checkpoint} containing this operational
-transformation and saves it into the local \textbf{checkpoint
-  database}. [TODO: cite OT paper]
+creates a \emph{checkpoint} containing this operational
+transformation and saves it into the local \emph{checkpoint
+  database} \cite{ot}.
 
 To be more specific, Collabrador stores a checkpoint database
-consisting of \textbf{checkpoint objects}. A checkpoint object is a data structure
+consisting of \emph{checkpoint objects}. A checkpoint object is a data structure
 encapsulating the details of the operational transformation performed
 by that edit, the hashes of the edit's parent or parents, the hashes
 of the edit's children, the hash of the unique checkpoint to be used
-as the base of the operational transformation, and the \textbf{user
+as the base of the operational transformation, and the \emph{user
   visibility list}, which is just the list of users that have locally
 stored this checkpoint. Checkpoint objects are keyed by the SHA-1 hash of
 the object itself. For full implementation details, see
@@ -70,7 +71,7 @@ then branches of this tree can join together (creating nodes with two
 parents instead of just one) and so the checkpoint database becomes a
 directed acyclic graph (DAG) instead, where the nodes are checkpoint objects,
 and the edges are OTs.  (For this reason, this paper
-uses the terms \textbf{checkpoint database} and \textbf{DAG}
+uses the terms \emph{checkpoint database} and \emph{DAG}
 interchangeably.)  The challenge with Collabrador is to maintain this
 DAG in a distributed fashion because there is no central
 server. Collabrador's solution is %for each user to store in its local
@@ -83,11 +84,11 @@ in-order packet delivery.
 The checkpoint database can be in two states. At most times, a user's 
 checkpoint database will be a graph with only a single leaf node, 
 representing the most recent checkpoint created by the user. 
-A database with just one leaf node is in the \textbf{merged}
+A database with just one leaf node is in the \emph{merged}
 state. When synchronizing with another user, that user's checkpoint
 objects will be copied into the local checkpoint database, causing the
 graph to have two leaf nodes. A database with two leaf nodes is in the
-\textbf{unmerged} state. Then, as described in
+\emph{unmerged} state. Then, as described in
 Section~\ref{sec:merge}, the Collabrador merge algorithm will find the
 least common ancestor of these leaves, merge the two edits into a
 single checkpoint, and then save this checkpoint into the database as
@@ -114,58 +115,9 @@ store the DAG in a database that is designed specifically to provide
 fault-tolerance guarantees.  One such candidate is PostgreSQL
 \cite{postgres}.
 
-\subsubsection{Named Checkpoints}
-
-In order to support named checkpoints, known as \textbf{commits},
-Collabrador needs one additional data structure. Each user should
-store a hash table mapping user-defined names to checkpoint hashes. 
-With this data structure, the algorithm for returning a specific named
-version of a document is as easy as looking up the hash associated with the name,
-and then looking up the checkpoint object associated with that hash.
-
-One key difference between a checkpoint and a commit is that eventually, 
-all users in the user visibility list have the
-committed version and associated commit name stored
-locally. Additionally, the initiator's user visibility list must
-necessarily contain all members of the group (even ones who
-dynamically joined) because the synchronization process added all
-users' user visibility lists to the initiator's. In other words,
-all users must explicitly agree on which version of the document that
-a particular name corresponds to. 
-The specifications of the Collabrador system ensure that a successful
-run of the commit algorithm guarantees correctness of the
-process. The only possible failure mode is if there is a new user
- who has never joined the same network as a pre-existing user, 
-but this new user can be safely disregarded because it has never 
-had the chance to obtain any version of the document, much less modify it.
-
-The process for creating a commit is mostly the same as the process
-for creating an unnamed checkpoint. The only difference is that,
-during the synchronization process, users also exchange the name of
-the checkpoint and its associated hash. If the initiator successfully
-synchronizes with all users on the network, the initiator's leaf node
-is the same hash as at the start of the process, and the leaf node's
-user visibility list exactly equals the computer's known user list,
-then the commit is successful. If any of these conditions are not met
-within a pre-set number of passes through the synchronization
-round-robin, the commit fails.
-
-
-Finally, it is worth noting what happens in the case of a failed
-commit. Imagine trying to commit a version named ``final'' and it
-fails, and then trying again. If a user in the system is asked for the
-version ``final'' before the second commit finishes, there is no
-guarantee as to what version of the document it will return. To avoid
-this problem, Collabrador requires that no two commit attempts use the
-same name. Because some users may not know the names of all failed
-commits, this restriction is enforced in practice, not in software. In
-other words, the human user needs to know that trying the same name
-twice can lead to undesirable results, but there are no software
-safeguards to prevent this situation from occurring.
-
 \subsection{Sync algorithm}
 
-\textbf{Synchronization} is a process which causes two computers with 
+\emph{Synchronization} is a process which causes two computers with 
 unique checkpoint databases to converge to a single checkpoint database. 
 Each machine must begin and end with a checkpoint database in the merged 
 state. The computer that initiates the synchronization
@@ -233,10 +185,77 @@ initiator will wait a random interval and then send a request to
 the user currently on the network with the next-lowest IP address in a
 round-robin process. After a quadratic number of pairwise
 synchronizations, all computers in the network will converge on the
-same checkpoint database.
+same checkpoint database. Figure~\ref{fig:sync-ex} shows an example of this process.
+
+\begin{figure}[p]
+\centering
+\begin{tabular}{ccc}
+User 1 & User 2 & User 3
+\\&&\\
+\xymatrix{
+A\ar[d] \\
+B\ar[d] \\
+C\ar[d] \\
+D}
+&
+\xymatrix{
+A\ar[d] \\
+E\ar[d] \\
+F}
+&
+\xymatrix{
+A\ar[d] \\
+E\ar[d] \\
+G}
+\\&&\\
+\xymatrix{
+& A\ar[dl]\ar[dr] & \\
+B\ar[d] && E\ar[d] \\
+C\ar[d] && F\ar[ddl] \\
+D\ar[dr] && \\
+& H & }
+&
+\xymatrix{
+& A\ar[dl]\ar[dr] & \\
+B\ar[d] && E\ar[d] \\
+C\ar[d] && F\ar[ddl] \\
+D\ar[dr] && \\
+& H & }
+&
+\xymatrix{
+A\ar[d] \\
+E\ar[d] \\
+G}
+\\&&\\
+\xymatrix{
+& A\ar[dl]\ar[dr] && \\
+B\ar[d] && E\ar[d]\ar[dddr] & \\
+C\ar[d] && F\ar[ddl] & \\
+D\ar[dr] &&& \\
+& H\ar[dr] && G\ar[dl] \\
+&& I & }
+&
+\xymatrix{
+& A\ar[dl]\ar[dr] & \\
+B\ar[d] && E\ar[d] \\
+C\ar[d] && F\ar[ddl] \\
+D\ar[dr] && \\
+& H & }
+&
+\xymatrix{
+& A\ar[dl]\ar[dr] && \\
+B\ar[d] && E\ar[d]\ar[dddr] & \\
+C\ar[d] && F\ar[ddl] & \\
+D\ar[dr] &&& \\
+& H\ar[dr] && G\ar[dl] \\
+&& I & }
+\end{tabular}
+\caption{This figure shows the checkpoint databases of three users. They initially have distinct versions of the document (labelled $D$, $F$, and $G$). The second row of the figure is the result of user 1 and user 2 synchronizing and then merging to form document $H$, and then the third row is the result of user 1 and user 3 synchronizing and then merging to form document $I$.}
+\label{fig:sync-ex}
+\end{figure}
 
 Additionally, whenever two computers synchronize, they also exchange
-their \textbf{known user lists}. All users, whether online or offline,
+their \emph{known user lists}. All users, whether online or offline,
 are included. The purpose of this exchange is so that all users
 collectively can determine the exact group membership, even if users
 are dynamically joining the group. Collabrador does not, however,
@@ -254,8 +273,8 @@ defines a transformation on character indices (although this
 transformation need not be injective or surjective), and all OTs are
 invertible.  A full formal description of OTs is given in \cite{wave}.
 
-OTs can interact in several ways, which are shown in figure
-\ref{fig:ot}:
+OTs can interact in several ways, which are shown in
+Figure~\ref{fig:ot}:
 \begin{itemize}
 \item Any number of OTs that are generated sequentially may be
   composed into a single OT representing the combined effect.  We can
@@ -288,8 +307,8 @@ approach, we prohibit incorrect automatic merges, but allow
 unnecessary manual merges if it makes the implementation substantially
 simpler.)  When conflicting changes are identified, they are flagged
 for manual resolution, but the algorithm continues to resolve
-subsequent non-conflicting changes.  An example is shown in figure
-\ref{fig:merge}.
+subsequent non-conflicting changes.  An example is shown in
+Figure~\ref{fig:merge}.
 
 \begin{figure}[h]
   \centering
@@ -388,6 +407,54 @@ subsequent non-conflicting changes.  An example is shown in figure
   \label{fig:merge}
 \end{figure}
 
+\subsection{Named Checkpoints}
+
+In order to support named checkpoints, known as \emph{commits},
+Collabrador needs one additional data structure. Each user should
+store a hash table mapping user-defined names to checkpoint hashes. 
+With this data structure, the algorithm for returning a specific named
+version of a document is as easy as looking up the hash associated with the name,
+and then looking up the checkpoint object associated with that hash.
+
+One key difference between a checkpoint and a commit is that eventually, 
+all users in the user visibility list have the
+committed version and associated commit name stored
+locally. Additionally, the initiator's user visibility list must
+necessarily contain all members of the group (even ones who
+dynamically joined) because the synchronization process added all
+users' user visibility lists to the initiator's. In other words,
+all users must explicitly agree on which version of the document that
+a particular name corresponds to. 
+The specifications of the Collabrador system ensure that a successful
+run of the commit algorithm guarantees correctness of the
+process. The only possible failure mode is if there is a new user
+ who has never joined the same network as a pre-existing user, 
+but this new user can be safely disregarded because it has never 
+had the chance to obtain any version of the document, much less modify it.
+
+The process for creating a commit is mostly the same as the process
+for creating an unnamed checkpoint. The only difference is that,
+during the synchronization process, users also exchange the name of
+the checkpoint and its associated hash. If the initiator successfully
+synchronizes with all users on the network, the initiator's leaf node
+is the same hash as at the start of the process, and the leaf node's
+user visibility list exactly equals the computer's known user list,
+then the commit is successful. If any of these conditions are not met
+within a pre-set number of passes through the synchronization
+round-robin, the commit fails.
+
+Finally, it is worth noting what happens in the case of a failed
+commit. Imagine trying to commit a version named ``final'' and it
+fails, and then trying again. If a user in the system is asked for the
+version ``final'' before the second commit finishes, there is no
+guarantee as to what version of the document it will return. To avoid
+this problem, Collabrador requires that no two commit attempts use the
+same name. Because some users may not know the names of all failed
+commits, this restriction is enforced in practice, not in software. In
+other words, the human user needs to know that trying the same name
+twice can lead to undesirable results, but there are no software
+safeguards to prevent this situation from occurring.
+
 \section{Analysis}
 
 \subsection{Use cases}
@@ -435,9 +502,13 @@ automatically resolved as before.
 After Alice and Charlie meet, Charlie's graph contains the conflict
 resolution.  When Charlie and Bob meet, the merge algorithm detects
 that Bob's DAG is a sub-graph of Charlie's, so Bob's document and DAG
-can be updated to be identical to Charlie's.  See Image.
+can be updated to be identical to Charlie's (Figure~\ref{fig:image}).
 
-TODO Image: Conflict resolution between Alice, Charlie and Bob.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=5in]{image.png}
+  \caption{Merge resolution for offline access.   \label{fig:image}}
+\end{figure}
 
 \vspace{5mm}
 \noindent
@@ -450,19 +521,19 @@ TODO Image: Conflict resolution between Alice, Charlie and Bob.
 
 When Alice and Bob meet, no conflict resolution will be
 required. Alice's OTs are $X = move(12,422, 1022)$, etc.  The OT of
-Bob's changes is $Y = insert(222, `spurious text generation')$. When Bob
+Bob's changes is $Y = insert(222, \text{``spurious text generation"})$. When Bob
 meets Alice, his Collabrador client will synchronize with her, and
 merge their text. The resulting transform will be 
 \begin{equation*}
 Y(X) \circ X = insert(822,
-\text{`spurious text generation'}) \circ move(12,422, 1022)
+\text{``spurious text generation"}) \circ move(12,422, 1022)
 \end{equation*}
-The index 822 is determined like so: index 1022 becomes index 612 because
-1022-(422-12) = 612.  The original insert, at location 222, is 210
-indices away from what is now index 612.  612+210 = 822. An equivalent
+The index 822 is determined as follows: index 1022 becomes index 612 because
+\(1022-(422-12) = 612.\)  The original insert, at location 222, is 210
+indices away from what is now index 612, and \(612+210 = 822.\) An equivalent
 result can be achieved by
 \begin{equation*}
-X(Y) \circ X = move(12,448,1048) \circ insert(222,`spurious text generation')
+X(Y) \circ X = move(12,448,1048) \circ insert(222, \text{``spurious text generation"})
 \end{equation*}
 where the \textit{new\_loc} and \textit{end\_index} have been incremented by 24 (the number of
 characters in the inserted string).
@@ -512,7 +583,88 @@ have to worry about data corruption at the application layer.
 
 \subsection{Performance}
 
-TODO by dlaw and jhurwitz
+\subsubsection{Performance of the sync algorithm}
+
+When two computers synchronize, the slowest step comes from
+sending checkpoint databases from one computer to the
+other. Recall that users are synchronizing continuously in
+the background while connected to a network, so any
+checkpoints saved while on the network will be synchronized
+nearly immediately; in this case, the cost of a
+synchronization is just the time it takes to send one
+checkpoint from the provider to the initiator, and then one
+more checkpoint (the merged document) from the initiator to
+the provider.
+
+In an ``average'' scenario, a user might click the ``save''
+button (thereby creating a checkpoint) after typing a
+paragraph. This document has paragraphs of 500--1000
+characters each, so 1000 characters per checkpoint seems
+reasonable. This corresponds to 1000 \emph{insert}
+operations, each of which takes roughly 6 bytes to store (1
+for the operation type, 1 for the character, and a 4-byte
+integer for position). If the user made lots of edits,
+there may also be about 1000 \emph{delete} operations, so
+the entire OT would take 12,000 bytes. The other
+information stored in the checkpoint object (e.g., the
+parent hashes and user visibility list) are very small by
+comparison. Thus, a normal checkpoint object appears to be
+about 12 kilobytes, or roughly 100 kilobits. Over a 1
+megabit per second Internet connection, this would take 0.1
+seconds to transmit. As previously mentioned, the initiator
+then needs to send a checkpoint back to the provider, so a
+sync step might take 0.2 seconds total.
+
+If a user goes offline for some time and then attempts to
+sync, the synchronization will take considerably longer
+because it needs to transmit information about \emph{all}
+checkpoints that occurred while the user was offline.
+Assuming (as before) that the space for storing the OT is
+the costliest requirement, it is sufficient to consider how
+large an OT may be after a user has been offline for a
+while. Consider, for instance, what happens if a user
+writes an entire 5,000-word paper while offline and then
+attempts to sync. In this paper, each word is about 10
+characters, so the edit would be roughly 50,000 characters.
+If the user went through many revisions while offline,
+there may be lots of deletions per inserted character. For
+lack of good data on how much overhead this would impose,
+make the assumption that this adds an order of magnitude of
+overhead, so there are 500,000 OT operations. Each one
+takes 6 bytes, so the overall data that needs to be
+transferred is 3 megabytes (or 24 megabits). This would
+take 24 seconds!
+
+At first glance, it may seem like this 24-second operation
+would be prohibitively expensive in a network with many
+computers. Consider for example a network with 10 users. If
+a user $A$ who has been offline for a while comes online,
+it would take 240 seconds (or 4 minutes) for user $A$ to
+communicate with all other users. However, once a user $B$
+knows about $A$'s edits, user $B$ can also send those edits
+to others through the sync process. The spread of $A$'s
+edits in the system will follow a logistic curve, so
+propagating $A$'s edits to all users will only take
+logarithmic (rather than linear) time in the number of
+users.
+
+\subsubsection{Performance of the merge algorithm}
+
+The time taken by the merge algorithm grows linearly with the number
+of changes between the two leaves and their lowest common ancestor.
+Assuming that it takes a thousand CPU cycles to process a single OT
+primitive, the process of merging two encyclopedias would take less
+than a millisecond.  Thus, we are not especially concerned with
+performance of the OT merge algorithm.  (Moreover, the time taken by
+the merge algorithm is negligible compared to the time taken by a user
+to manually resolve a conflict.)
+
+Using the naive approach, opening a merged DAG for editing takes
+linear time in the size of the document history, since the complete
+set of OTs must be layered upon the root of the DAG.  This can be
+mitigated by caching file contents for each node in the DAG, and
+selectively reordering OTs to minimize the number of primitives
+required to represent each operation.
 
 \subsection{Design Tradeoffs and Flaws}
 
@@ -524,21 +676,23 @@ Collabrador is distributed, synchronizations are pairwise, making the
 sync algorithm quadratic with respect to the number of users. A
 centralized server would have asymptotically linear synchronization.
 
-Many collaborative editors use version vectors: a vector of version 
-corresponding to each user. For example, V = (1, 2, 2) means that the first
-user has version 1 of the document, and the other two have the second version.
-This is a compact and nifty way to represent version data. V1 is newer than V2
-if all of V1's elements are greater than or equal to V2's. If one vector is not
-clearly older than another, e.g. V1 = (1,2,3) and V2 = (3,1,4), then there is 
-a conflict. A DAG is more visually informative than a version vector and
-provides an intuitive way for users to visually track the document
-history. The DAG allows us to perform OTs and use a highly autonomous
-merge algorithm.  A system using version vectors would require the
-user to merge conflicts more frequently, since less information is
-available. The cost, however, is that the DAG grows linearly with edit
-history. The more frequently a document has been committed, the more
-overhead there is. Version vector overhead only increases as the
-number of users editing a document increases.
+Some collaborative editors use version vectors: a vector containing
+the last known version number for each user. For example, \(V = (1, 2,
+2)\) means that the first user has version 1 of the document, and the
+other two have the second version.  This is a compact and nifty way to
+represent version data. \(V_1\) is newer than \(V_2\) if all of
+\(V_1\)'s elements are greater than or equal to \(V_2\)'s. If one
+vector is not clearly older than another, e.g. \(V_1 = (1,2,3)\) and
+\(V_2 = (3,1,4)\), then there is a conflict. A DAG is more visually
+informative than a version vector and provides an intuitive way for
+users to visually track the document history. The DAG allows us to
+perform OTs and use a highly autonomous merge algorithm.  A system
+using version vectors would require the user to merge conflicts more
+frequently, since less information is available. The cost, however, is
+that the DAG grows linearly with edit history. The more frequently a
+document has been committed, the more overhead there is. Version
+vector overhead only increases as the number of users editing a
+document increases.
 
 We support only named checkpoints or dynamic membership, not
 both. This is because the ability to delete users greatly complicates
@@ -568,6 +722,6 @@ solved include dynamic membership and adding an authentication system.
 
 \bibliographystyle{IEEEtran} \bibliography{IEEEabrv,dp2}
 
-TODO WORDCOUNT words
+4832 words
 
 \end{document}
