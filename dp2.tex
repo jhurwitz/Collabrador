@@ -60,26 +60,23 @@ Section~\ref{sec:storage-dag}.  We will assume that SHA-1 has no
 collisions, so two checkpoints will have the same hash if and only if
 they perform the same changes to the same base from the same parents.
 
-When the system consists of a single computer, the checkpoint database
-is just a linear progression of checkpoints. Adding in multiple
-computers, a hypothetical central server keeping track of edits on all
-computers would model the checkpoint database as a directed tree, with
-a branching node occurring whenever two computers make distinct
-edits. If two computers are allowed to synchronize with each other,
-then branches of this tree can join together (creating nodes with two
-parents instead of just one) and so the checkpoint database becomes a
-directed acyclic graph (DAG) instead, where the nodes are checkpoint
-objects, and the edges are OTs.  (For this reason, this paper uses the
-terms \emph{checkpoint database} and \emph{DAG} interchangeably.)  The
-challenge with Collabrador is to maintain this DAG in a distributed
-fashion because there is no central server. Collabrador's solution
-is %for each user to store in its local
-% checkpoint database only the portion of the graph that it knows
-% about while
-a synchronization process in the background that lets users constantly
-communicate with each other to share and exchange parts of the
-graph. Collabrador operates on top of TCP/IP to ensure reliable and
-in-order packet delivery.
+When the system consists of a single computer, the checkpoint database is just
+a linear progression of checkpoints. Adding in multiple computers, a
+hypothetical central server keeping track of edits on all computers would model
+the checkpoint database as a directed tree, with a branching node occurring
+whenever two computers make distinct edits. If two computers are allowed to
+synchronize with each other, then branches of this tree can join together
+(creating nodes with two parents instead of just one) and so the checkpoint
+database becomes a directed acyclic graph (DAG) instead, where the nodes are
+checkpoint objects, and the edges are OTs.  (For this reason, this paper uses
+the terms \emph{checkpoint database} and \emph{DAG} interchangeably.)  The
+challenge with Collabrador is to maintain this DAG in a distributed fashion
+because there is no central server. Collabrador's solution is for each user to
+store in its local checkpoint database only the portion of the graph that it
+knows about while a synchronization process in the background lets users
+constantly communicate with each other to share and exchange parts of the
+graph. Collabrador operates on top of TCP/IP to ensure reliable and in-order
+packet delivery.
 
 The checkpoint database can be in two states. At most times, a user's
 checkpoint database will be a graph with only a single leaf node,
@@ -186,7 +183,7 @@ process. After a quadratic number of pairwise synchronizations, all
 computers in the network will converge on the same checkpoint
 database. Figure~\ref{fig:sync-ex} shows an example of this process.
 
-\begin{figure}[h]
+\begin{figure}[p]
   \centering
   \begin{tabular}{ccc}
     User 1 & User 2 & User 3
@@ -295,35 +292,7 @@ Figure~\ref{fig:ot}:
   are no conflicting changes.
 \end{itemize}
 
-When the merge algorithm takes over, the sync algorithm has copied
-nodes between two merged DAGs, resulting in an unmerged DAG.  The sync
-algorithm has also identified the lowest common ancestor of the two
-leaves in the unmerged DAG.  We must merge these into a single
-leaf---automatically if possible, but with user intervention if
-necessary. Formally, given two OTs that take the same parent to
-different children, we wish to generate a single OT that applies both
-sets of changes to the parent in a logical way.
-
-We simply follow the approach mentioned above: use one OT to transform
-the character indices of the second OT, and compose the result with
-the first OT.  Conflicting portions of the second OT are ignored and
-flagged for manual user resolution.  (Following the New Jersey design
-approach, we prohibit incorrect automatic merges, but allow
-unnecessary manual merges if it makes the implementation substantially
-simpler.)  When conflicting changes are identified, they are flagged
-for manual resolution, but the algorithm continues to resolve
-subsequent non-conflicting changes.  An example is shown in
-Figure~\ref{fig:merge}.
-
-Conflicting changes are defined by the behavior of index
-transformations: two OTs conflict if and only if one applied to the
-other is undefined.  For example, an insertion of one character at
-index 22 conflicts only with another operation at index 22, since the
-index transformation is defined as follows:
-\[ index(n) = \begin{cases} n & n < 22 \\ n+1 & n > 22 \\
-  \text{undefined} & n = 22 \end{cases}. \]
-
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \begin{minipage}{\textwidth}
     \begin{multicols}{2}
@@ -378,7 +347,35 @@ index transformation is defined as follows:
   \label{fig:ot}
 \end{figure}
 
-\begin{figure}[h]
+When the merge algorithm takes over, the sync algorithm has copied
+nodes between two merged DAGs, resulting in an unmerged DAG.  The sync
+algorithm has also identified the lowest common ancestor of the two
+leaves in the unmerged DAG.  We must merge these into a single
+leaf---automatically if possible, but with user intervention if
+necessary. Formally, given two OTs that take the same parent to
+different children, we wish to generate a single OT that applies both
+sets of changes to the parent in a logical way.
+
+We simply follow the approach mentioned above: use one OT to transform
+the character indices of the second OT, and compose the result with
+the first OT.  Conflicting portions of the second OT are ignored and
+flagged for manual user resolution.  (Following the New Jersey design
+approach, we prohibit incorrect automatic merges, but allow
+unnecessary manual merges if it makes the implementation substantially
+simpler.)  When conflicting changes are identified, they are flagged
+for manual resolution, but the algorithm continues to resolve
+subsequent non-conflicting changes.  An example is shown in
+Figure~\ref{fig:merge}.
+
+Conflicting changes are defined by the behavior of index
+transformations: two OTs conflict if and only if one applied to the
+other is undefined.  For example, an insertion of one character at
+index 22 conflicts only with another operation at index 22, since the
+index transformation is defined as follows:
+\[ index(n) = \begin{cases} n & n < 22 \\ n+1 & n > 22 \\
+  \text{undefined} & n = 22 \end{cases}. \]
+
+\begin{figure}[ht]
   \centering
   \begin{minipage}{\textwidth}
     \begin{multicols}{2}
@@ -536,7 +533,7 @@ resolution.  When Charlie and Bob meet, the merge algorithm detects
 that Bob's DAG is a sub-graph of Charlie's, so Bob's document and DAG
 can be updated to be identical to Charlie's (Figure~\ref{fig:image}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=5in]{image.png}
   \caption{Merge resolution for offline access.  \label{fig:image}}
