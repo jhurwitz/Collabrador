@@ -1,6 +1,5 @@
 *Need to define conflict, particularly wrt OTs
 *if we don’t store the text, do we reconstruct the document every time? what’s up with that? (2.1)
-*diagram of example sync with 3 users
 *explain that OT contains merge conflict resolution
 *design flaw: reconstructing document from OTs can be slow (but only need to do this when you first open it)
 *be consistent about saying computer/user/"instance of Collabrador"
