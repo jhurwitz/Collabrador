@@ -435,9 +435,13 @@ automatically resolved as before.
 After Alice and Charlie meet, Charlie's graph contains the conflict
 resolution.  When Charlie and Bob meet, the merge algorithm detects
 that Bob's DAG is a sub-graph of Charlie's, so Bob's document and DAG
-can be updated to be identical to Charlie's.  See Image.
+can be updated to be identical to Charlie's (figure \ref{fig:image}).
 
-TODO Image: Conflict resolution between Alice, Charlie and Bob.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=5in]{image.png}
+  \caption{Merge resolution for offline access.   \label{fig:image}}
+\end{figure}
 
 \vspace{5mm}
 \noindent
@@ -519,11 +523,11 @@ have to worry about data corruption at the application layer.
 
 The time taken by the merge algorithm grows linearly with the number
 of changes between the two leaves and their lowest common ancestor.
-Assuming that it takes about a thousand CPU cycles to process a single
-OT primitive, the process of merging two encyclopedias would take less
+Assuming that it takes a thousand CPU cycles to process a single OT
+primitive, the process of merging two encyclopedias would take less
 than a millisecond.  Thus, we are not especially concerned with
-performance of the OT merge algorithm.  (Moreover, the time taken
-by the merge algorithm is negligible compared to the time taken by a user
+performance of the OT merge algorithm.  (Moreover, the time taken by
+the merge algorithm is negligible compared to the time taken by a user
 to manually resolve a conflict.)
 
 Using the naive approach, opening a merged DAG for editing takes
@@ -531,7 +535,7 @@ linear time in the size of the document history, since the complete
 set of OTs must be layered upon the root of the DAG.  This can be
 mitigated by caching file contents for each node in the DAG, and
 selectively reordering OTs to minimize the number of primitives
-required by an operation.
+required to represent each operation.
 
 \subsection{Design Tradeoffs and Flaws}
 
