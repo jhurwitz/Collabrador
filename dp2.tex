@@ -517,11 +517,21 @@ have to worry about data corruption at the application layer.
 
 \subsubsection{Performance of the merge algorithm}
 
-The time taken by the merge algorithm grows linearly with the 
+The time taken by the merge algorithm grows linearly with the number
+of changes between the two leaves and their lowest common ancestor.
+Assuming that it takes about a thousand CPU cycles to process a single
+OT primitive, the process of merging two encyclopedias would take less
+than a millisecond.  Thus, we are not especially concerned with
+performance of the OT merge algorithm.  (Moreover, the time taken
+by the merge algorithm is negligible compared to the time taken by a user
+to manually resolve a conflict.)
 
-scales linearly with number of primitives
-
-can be mitigated with commits, caching, and efficient repacking of complex OTs
+Using the naive approach, opening a merged DAG for editing takes
+linear time in the size of the document history, since the complete
+set of OTs must be layered upon the root of the DAG.  This can be
+mitigated by caching file contents for each node in the DAG, and
+selectively reordering OTs to minimize the number of primitives
+required by an operation.
 
 \subsection{Design Tradeoffs and Flaws}
 
@@ -533,21 +543,23 @@ Collabrador is distributed, synchronizations are pairwise, making the
 sync algorithm quadratic with respect to the number of users. A
 centralized server would have asymptotically linear synchronization.
 
-Some collaborative editors use version vectors: a vector of version numbers
-corresponding to each user. For example, V = (1, 2, 2) means that the first
-user has version 1 of the document, and the other two have the second version.
-This is a compact and nifty way to represent version data. V1 is newer than V2
-if all of V1's elements are greater than or equal to V2's. If one vector is not
-clearly older than another, e.g. V1 = (1,2,3) and V2 = (3,1,4), then there is 
-a conflict. A DAG is more visually informative than a version vector and
-provides an intuitive way for users to visually track the document
-history. The DAG allows us to perform OTs and use a highly autonomous
-merge algorithm.  A system using version vectors would require the
-user to merge conflicts more frequently, since less information is
-available. The cost, however, is that the DAG grows linearly with edit
-history. The more frequently a document has been committed, the more
-overhead there is. Version vector overhead only increases as the
-number of users editing a document increases.
+Some collaborative editors use version vectors: a vector containing
+the last known version number for each user. For example, \(V = (1, 2,
+2)\) means that the first user has version 1 of the document, and the
+other two have the second version.  This is a compact and nifty way to
+represent version data. \(V_1\) is newer than \(V_2\) if all of
+\(V_1\)'s elements are greater than or equal to \(V_2\)'s. If one
+vector is not clearly older than another, e.g. \(V_1 = (1,2,3)\) and
+\(V_2 = (3,1,4)\), then there is a conflict. A DAG is more visually
+informative than a version vector and provides an intuitive way for
+users to visually track the document history. The DAG allows us to
+perform OTs and use a highly autonomous merge algorithm.  A system
+using version vectors would require the user to merge conflicts more
+frequently, since less information is available. The cost, however, is
+that the DAG grows linearly with edit history. The more frequently a
+document has been committed, the more overhead there is. Version
+vector overhead only increases as the number of users editing a
+document increases.
 
 We support only named checkpoints or dynamic membership, not
 both. This is because the ability to delete users greatly complicates
