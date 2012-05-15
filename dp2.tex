@@ -36,30 +36,29 @@ and is the basis for all major collaborative editors.
 
 On each computer, Collabrador consists of a \emph{text editor} and a
 \emph{checkpoint database}. In addition to storing the text,
-Collabrador's text editor saves a description of the
-\emph{operations} performed by the user. These operations are
-inserting a character at a given position (\emph{insert}), deleting
-a character at a given position (\emph{delete}), and using cut/paste
-to move a block of text from one position to another (\emph{move});
-collectively, these operations form an \emph{operational
-  transformation} describing how the user modified the initial
-document. When the user clicks the ``save'' button, Collabrador
-creates a \emph{checkpoint} containing this operational
-transformation and saves it into the local \emph{checkpoint
-  database} \cite{ot}.
+Collabrador's text editor saves a description of the \emph{operations}
+performed by the user. These operations are inserting a character at a
+given position (\emph{insert}), deleting a character at a given
+position (\emph{delete}), and using cut/paste to move a block of text
+from one position to another (\emph{move}); collectively, these
+operations form an \emph{operational transformation} describing how
+the user modified the initial document. When the user clicks the
+``save'' button, Collabrador creates a \emph{checkpoint} containing
+this operational transformation and saves it into the local
+\emph{checkpoint database} \cite{ot}.
 
 To be more specific, Collabrador stores a checkpoint database
-consisting of \emph{checkpoint objects}. A checkpoint object is a data structure
-encapsulating the details of the operational transformation performed
-by that edit, the hashes of the edit's parent or parents, the hashes
-of the edit's children, the hash of the unique checkpoint to be used
-as the base of the operational transformation, and the \emph{user
-  visibility list}, which is just the list of users that have locally
-stored this checkpoint. Checkpoint objects are keyed by the SHA-1 hash of
-the object itself. For full implementation details, see
-Section~\ref{sec:storage-dag}.  We will assume that SHA-1 has no collisions,
-so two checkpoints will have the same hash if and only if they perform
-the same changes to the same base from the same parents.
+consisting of \emph{checkpoint objects}. A checkpoint object is a data
+structure encapsulating the details of the operational transformation
+performed by that edit, the hashes of the edit's parent or parents,
+the hashes of the edit's children, the hash of the unique checkpoint
+to be used as the base of the operational transformation, and the
+\emph{user visibility list}, which is just the list of users that have
+locally stored this checkpoint. Checkpoint objects are keyed by the
+SHA-1 hash of the object itself. For full implementation details, see
+Section~\ref{sec:storage-dag}.  We will assume that SHA-1 has no
+collisions, so two checkpoints will have the same hash if and only if
+they perform the same changes to the same base from the same parents.
 
 When the system consists of a single computer, the checkpoint database
 is just a linear progression of checkpoints. Adding in multiple
@@ -69,31 +68,31 @@ a branching node occurring whenever two computers make distinct
 edits. If two computers are allowed to synchronize with each other,
 then branches of this tree can join together (creating nodes with two
 parents instead of just one) and so the checkpoint database becomes a
-directed acyclic graph (DAG) instead, where the nodes are checkpoint objects,
-and the edges are OTs.  (For this reason, this paper
-uses the terms \emph{checkpoint database} and \emph{DAG}
-interchangeably.)  The challenge with Collabrador is to maintain this
-DAG in a distributed fashion because there is no central
-server. Collabrador's solution is %for each user to store in its local
-%checkpoint database only the portion of the graph that it knows about while 
-a synchronization process in the background that lets users
-constantly communicate with each other to share and exchange parts of
-the graph. Collabrador operates on top of TCP/IP to ensure reliable and
-in-order packet delivery. 
+directed acyclic graph (DAG) instead, where the nodes are checkpoint
+objects, and the edges are OTs.  (For this reason, this paper uses the
+terms \emph{checkpoint database} and \emph{DAG} interchangeably.)  The
+challenge with Collabrador is to maintain this DAG in a distributed
+fashion because there is no central server. Collabrador's solution
+is %for each user to store in its local
+% checkpoint database only the portion of the graph that it knows
+% about while
+a synchronization process in the background that lets users constantly
+communicate with each other to share and exchange parts of the
+graph. Collabrador operates on top of TCP/IP to ensure reliable and
+in-order packet delivery.
 
-The checkpoint database can be in two states. At most times, a user's 
-checkpoint database will be a graph with only a single leaf node, 
-representing the most recent checkpoint created by the user. 
-A database with just one leaf node is in the \emph{merged}
-state. When synchronizing with another user, that user's checkpoint
-objects will be copied into the local checkpoint database, causing the
-graph to have two leaf nodes. A database with two leaf nodes is in the
-\emph{unmerged} state. Then, as described in
-Section~\ref{sec:merge}, the Collabrador merge algorithm will find the
-least common ancestor of these leaves, merge the two edits into a
-single checkpoint, and then save this checkpoint into the database as
-a node with two parents and an operational transformation relative to
-the least common ancestor.
+The checkpoint database can be in two states. At most times, a user's
+checkpoint database will be a graph with only a single leaf node,
+representing the most recent checkpoint created by the user.  A
+database with just one leaf node is in the \emph{merged} state. When
+synchronizing with another user, that user's checkpoint objects will
+be copied into the local checkpoint database, causing the graph to
+have two leaf nodes. A database with two leaf nodes is in the
+\emph{unmerged} state. Then, as described in Section~\ref{sec:merge},
+the Collabrador merge algorithm will find the least common ancestor of
+these leaves, merge the two edits into a single checkpoint, and then
+save this checkpoint into the database as a node with two parents and
+an operational transformation relative to the least common ancestor.
 
 \subsubsection{Storage of the DAG}
 \label{sec:storage-dag}
@@ -117,10 +116,10 @@ fault-tolerance guarantees.  One such candidate is PostgreSQL
 
 \subsection{Sync algorithm}
 
-\emph{Synchronization} is a process which causes two computers with 
-unique checkpoint databases to converge to a single checkpoint database. 
-Each machine must begin and end with a checkpoint database in the merged 
-state. The computer that initiates the synchronization
+\emph{Synchronization} is a process which causes two computers with
+unique checkpoint databases to converge to a single checkpoint
+database.  Each machine must begin and end with a checkpoint database
+in the merged state. The computer that initiates the synchronization
 process is called the \emph{initiator}, and the other computer is
 called the \emph{provider}. At a high level, the synchronization
 process performs three steps:
@@ -136,9 +135,9 @@ have the provider send its entire checkpoint database to the initiator
 in the first step. However, it is usually the case that most of the
 provider's database is already known to the initiator. To minimize the
 amount of communication required, the provider only needs to send the
-checkpoint objects it has that the initiator does not have. The process 
-for discovering which objects the initiator does not have is described 
-below.
+checkpoint objects it has that the initiator does not have. The
+process for discovering which objects the initiator does not have is
+described below.
 
 Let $I$ be the leaf node of the initiator's database, let $P$ be the
 leaf node of the provider's database, and let $C$ be any common
@@ -177,81 +176,87 @@ intervals, sends a request to another computer asking if it is willing
 to synchronize.  The two conditions under which a computer will refuse
 a request are if it is waiting for a response from any computer about
 synchronizing (up to some time-out), or if it is currently
-synchronizing. Syncronization also ocurrs when a user saves. 
-When two computers agree to synchronize, the computer
-that initiated the request will play the role of initiator and the
-other computer will be the provider. When this process finishes, the
-initiator will wait a random interval and then send a request to
-the user currently on the network with the next-lowest IP address in a
-round-robin process. After a quadratic number of pairwise
-synchronizations, all computers in the network will converge on the
-same checkpoint database. Figure~\ref{fig:sync-ex} shows an example of this process.
+synchronizing. Syncronization also ocurrs when a user saves.  When two
+computers agree to synchronize, the computer that initiated the
+request will play the role of initiator and the other computer will be
+the provider. When this process finishes, the initiator will wait a
+random interval and then send a request to the user currently on the
+network with the next-lowest IP address in a round-robin
+process. After a quadratic number of pairwise synchronizations, all
+computers in the network will converge on the same checkpoint
+database. Figure~\ref{fig:sync-ex} shows an example of this process.
 
-\begin{figure}[p]
-\centering
-\begin{tabular}{ccc}
-User 1 & User 2 & User 3
-\\&&\\
-\xymatrix{
-A\ar[d] \\
-B\ar[d] \\
-C\ar[d] \\
-D}
-&
-\xymatrix{
-A\ar[d] \\
-E\ar[d] \\
-F}
-&
-\xymatrix{
-A\ar[d] \\
-E\ar[d] \\
-G}
-\\&&\\
-\xymatrix{
-& A\ar[dl]\ar[dr] & \\
-B\ar[d] && E\ar[d] \\
-C\ar[d] && F\ar[ddl] \\
-D\ar[dr] && \\
-& H & }
-&
-\xymatrix{
-& A\ar[dl]\ar[dr] & \\
-B\ar[d] && E\ar[d] \\
-C\ar[d] && F\ar[ddl] \\
-D\ar[dr] && \\
-& H & }
-&
-\xymatrix{
-A\ar[d] \\
-E\ar[d] \\
-G}
-\\&&\\
-\xymatrix{
-& A\ar[dl]\ar[dr] && \\
-B\ar[d] && E\ar[d]\ar[dddr] & \\
-C\ar[d] && F\ar[ddl] & \\
-D\ar[dr] &&& \\
-& H\ar[dr] && G\ar[dl] \\
-&& I & }
-&
-\xymatrix{
-& A\ar[dl]\ar[dr] & \\
-B\ar[d] && E\ar[d] \\
-C\ar[d] && F\ar[ddl] \\
-D\ar[dr] && \\
-& H & }
-&
-\xymatrix{
-& A\ar[dl]\ar[dr] && \\
-B\ar[d] && E\ar[d]\ar[dddr] & \\
-C\ar[d] && F\ar[ddl] & \\
-D\ar[dr] &&& \\
-& H\ar[dr] && G\ar[dl] \\
-&& I & }
-\end{tabular}
-\caption{A simple example of the synchronization process. This figure shows the checkpoint databases of three users. They initially have distinct versions of the document (labelled $D$, $F$, and $G$). The second row of the figure is the result of user 1 and user 2 synchronizing and then merging to form document $H$, and then the third row is the result of user 1 and user 3 synchronizing and then merging to form document $I$.}
-\label{fig:sync-ex}
+\begin{figure}[h]
+  \centering
+  \begin{tabular}{ccc}
+    User 1 & User 2 & User 3
+    \\&&\\
+    \xymatrix{
+      A\ar[d] \\
+      B\ar[d] \\
+      C\ar[d] \\
+      D}
+    &
+    \xymatrix{
+      A\ar[d] \\
+      E\ar[d] \\
+      F}
+    &
+    \xymatrix{
+      A\ar[d] \\
+      E\ar[d] \\
+      G}
+    \\&&\\
+    \xymatrix{
+      & A\ar[dl]\ar[dr] & \\
+      B\ar[d] && E\ar[d] \\
+      C\ar[d] && F\ar[ddl] \\
+      D\ar[dr] && \\
+      & H & }
+    &
+    \xymatrix{
+      & A\ar[dl]\ar[dr] & \\
+      B\ar[d] && E\ar[d] \\
+      C\ar[d] && F\ar[ddl] \\
+      D\ar[dr] && \\
+      & H & }
+    &
+    \xymatrix{
+      A\ar[d] \\
+      E\ar[d] \\
+      G}
+    \\&&\\
+    \xymatrix{
+      & A\ar[dl]\ar[dr] && \\
+      B\ar[d] && E\ar[d]\ar[dddr] & \\
+      C\ar[d] && F\ar[ddl] & \\
+      D\ar[dr] &&& \\
+      & H\ar[dr] && G\ar[dl] \\
+      && I & }
+    &
+    \xymatrix{
+      & A\ar[dl]\ar[dr] & \\
+      B\ar[d] && E\ar[d] \\
+      C\ar[d] && F\ar[ddl] \\
+      D\ar[dr] && \\
+      & H & }
+    &
+    \xymatrix{
+      & A\ar[dl]\ar[dr] && \\
+      B\ar[d] && E\ar[d]\ar[dddr] & \\
+      C\ar[d] && F\ar[ddl] & \\
+      D\ar[dr] &&& \\
+      & H\ar[dr] && G\ar[dl] \\
+      && I & }
+  \end{tabular}
+  \caption{A simple example of the synchronization process. This
+    figure shows the checkpoint databases of three users. They
+    initially have distinct versions of the document (labelled $D$,
+    $F$, and $G$). The second row of the figure is the result of user
+    1 and user 2 synchronizing and then merging to form document $H$,
+    and then the third row is the result of user 1 and user 3
+    synchronizing and then merging to form document $I$.}
+  \label{fig:sync-ex}
 \end{figure}
 
 Additionally, whenever two computers synchronize, they also exchange
@@ -315,7 +320,8 @@ transformations: two OTs conflict if and only if one applied to the
 other is undefined.  For example, an insertion of one character at
 index 22 conflicts only with another operation at index 22, since the
 index transformation is defined as follows:
-\[ index(n) = \begin{cases} n & n < 22 \\ n+1 & n > 22 \\ \text{undefined} & n = 22 \end{cases}. \]
+\[ index(n) = \begin{cases} n & n < 22 \\ n+1 & n > 22 \\
+  \text{undefined} & n = 22 \end{cases}. \]
 
 \begin{figure}[h]
   \centering
@@ -347,7 +353,7 @@ index transformation is defined as follows:
         Z &=& insert(1, \mathrm{x})
       \end{eqnarray*}
       We have \(X(A) = B\), \(Y(B) = C\), and \(Z(A) = D\).  The
-      complete diagram of relations is given in figure 
+      complete diagram of relations is given in figure
       \subsubsection*{Composition}
       The composition \(Y \circ X\) is performed in the obvious way,
       and we have \((Y \circ X)(A) = C\).
@@ -418,67 +424,68 @@ index transformation is defined as follows:
 
 In order to support named checkpoints, known as \emph{commits},
 Collabrador needs one additional data structure. Each user should
-store a hash table mapping user-defined names to checkpoint hashes. 
+store a hash table mapping user-defined names to checkpoint hashes.
 With this data structure, the algorithm for returning a specific named
-version of a document is as easy as looking up the hash associated with the name,
-and then looking up the checkpoint object associated with that hash.
+version of a document is as easy as looking up the hash associated
+with the name, and then looking up the checkpoint object associated
+with that hash.
 
-One key difference between a checkpoint and a commit is that eventually, 
-all users in the user visibility list have the
-committed version and associated commit name stored
-locally. Additionally, the initiator's user visibility list must
-necessarily contain all members of the group (even ones who
-dynamically joined) because the synchronization process added all
-users' user visibility lists to the initiator's. In other words,
-all users must explicitly agree on which version of the document that
-a particular name corresponds to. 
-The specifications of the Collabrador system ensure that a successful
-run of the commit algorithm guarantees correctness of the
-process. The only possible failure mode is if there is a new user
- who has never joined the same network as a pre-existing user, 
-but this new user can be safely disregarded because it has never 
-had the chance to obtain any version of the document, much less modify it.
+One key difference between a checkpoint and a commit is that
+eventually, all users in the user visibility list have the committed
+version and associated commit name stored locally. Additionally, the
+initiator's user visibility list must necessarily contain all members
+of the group (even ones who dynamically joined) because the
+synchronization process added all users' user visibility lists to the
+initiator's. In other words, all users must explicitly agree on which
+version of the document that a particular name corresponds to.  The
+specifications of the Collabrador system ensure that a successful run
+of the commit algorithm guarantees correctness of the process. The
+only possible failure mode is if there is a new user who has never
+joined the same network as a pre-existing user, but this new user can
+be safely disregarded because it has never had the chance to obtain
+any version of the document, much less modify it.
 
-Creating a commit is a two-stage process. First, the initiator sends out 
-a message saying, ``I want to synchronize. Do you have this node?''. Each
-user who has this node enters the \emph{commiting} state, and sends a 
-response to the initiator. If all users associated with the document respond, 
-at this point the commit is successful, and the initiator will send out a
-name for all the users to add to their hash table mapping user-defined names 
-to checkpoint hashes. At this point, everybody is in the 
-\emph{committed state}. If any of the users do not have the node, the 
-initiator aborts the commit. The providers and the initiators each have a 
-timeout so that they will not be left waiting forever for a commit to complete,
-so after an initator aborts a commit, the users will all leave the commiting
-state eventually. If two users atempt to initiate a commit at the same time,
-they both will fail, beacsue a user cannot acknowledge any commit requests 
-while already in the commiting state. See Section 3.2 %~\ref{sec:failures} 
-for a detailed analysis of commit failures. 
+Creating a commit is a two-stage process. First, the initiator sends
+out a message saying, ``I want to synchronize. Do you have this
+node?''. Each user who has this node enters the \emph{commiting}
+state, and sends a response to the initiator. If all users associated
+with the document respond, at this point the commit is successful, and
+the initiator will send out a name for all the users to add to their
+hash table mapping user-defined names to checkpoint hashes. At this
+point, everybody is in the \emph{committed state}. If any of the users
+do not have the node, the initiator aborts the commit. The providers
+and the initiators each have a timeout so that they will not be left
+waiting forever for a commit to complete, so after an initator aborts
+a commit, the users will all leave the commiting state eventually. If
+two users atempt to initiate a commit at the same time, they both will
+fail, beacsue a user cannot acknowledge any commit requests while
+already in the commiting state. See Section 3.2 %~\ref{sec:failures}
+for a detailed analysis of commit failures.
 
 
 
-%The process for creating a commit is mostly the same as the process
-%for creating an unnamed checkpoint. The only difference is that,
-%during the synchronization process, users also exchange the name of
-%the checkpoint and its associated hash. If the initiator successfully
-%synchronizes with all users on the network, the initiator's leaf node
-%is the same hash as at the start of the process, and the leaf node's
-%user visibility list exactly equals the computer's known user list,
-%then the commit is successful. If any of these conditions are not met
-%within a pre-set number of passes through the synchronization
-%round-robin, the commit fails.
+% The process for creating a commit is mostly the same as the process
+% for creating an unnamed checkpoint. The only difference is that,
+% during the synchronization process, users also exchange the name of
+% the checkpoint and its associated hash. If the initiator
+% successfully synchronizes with all users on the network, the
+% initiator's leaf node is the same hash as at the start of the
+% process, and the leaf node's user visibility list exactly equals the
+% computer's known user list, then the commit is successful. If any of
+% these conditions are not met within a pre-set number of passes
+% through the synchronization round-robin, the commit fails.
 
-%Fint is worth noting what happens in the case of a failed
-%commit. Imagine trying to commit a version named ``final'' and it
-%fails, and then trying again. If a user in the system is asked for the
-%version ``final'' before the second commit finishes, there is no
-%guarantee as to what version of the document it will return. To avoid
-%this problem, Collabrador requires that no two commit attempts use the
-%same name. Because some users may not know the names of all failed
-%commits, this restriction is enforced in practice, not in software. In
-%other words, the human user needs to know that trying the same name
-%twice can lead to undesirable results, but there are no software
-%safeguards to prevent this situation from occurring. 
+% Fint is worth noting what happens in the case of a failed
+% commit. Imagine trying to commit a version named ``final'' and it
+% fails, and then trying again. If a user in the system is asked for
+% the version ``final'' before the second commit finishes, there is no
+% guarantee as to what version of the document it will return. To
+% avoid this problem, Collabrador requires that no two commit attempts
+% use the same name. Because some users may not know the names of all
+% failed commits, this restriction is enforced in practice, not in
+% software. In other words, the human user needs to know that trying
+% the same name twice can lead to undesirable results, but there are
+% no software safeguards to prevent this situation from occurring.
 
 \section{Analysis}
 
@@ -494,24 +501,24 @@ for a detailed analysis of commit failures.
 
 Alice and Bob will not have to resolve conflicts when the change the
 document in different paragraphs. For example, if transform $U =
-insert(12, \text{`a whole bunch of text'})$ represents Bob adding
-text to paragraph one, and $V = insert(422, \text{`more text
-  here!'})$ represents Alice adding text to paragraph two, the
-resulting merge would be
+insert(12, \text{`a whole bunch of text'})$ represents Bob adding text
+to paragraph one, and $V = insert(422, \text{`more text here!'})$
+represents Alice adding text to paragraph two, the resulting merge
+would be
 \begin{equation*}
-U(V)\circ U = insert(434, \text{`more text
-  here!'})\circ insert(12, \text{`a whole bunch of text'})\text{, or}
+  U(V)\circ U = insert(434, \text{`more text
+    here!'})\circ insert(12, \text{`a whole bunch of text'})\text{, or}
 \end{equation*}
 \begin{equation*}
-V(U)\circ V = insert(12, \text{`a whole bunch of text'})\circ
-insert(422, \text{`more text here!'}).
+  V(U)\circ V = insert(12, \text{`a whole bunch of text'})\circ
+  insert(422, \text{`more text here!'}).
 \end{equation*}
-When Alice and Bob modify
-the same sentence, with Alice's changes represented as $X$ and Bob's
-changes represented as $Y$, their changes will require conflict
-resolution if $X(Y)$ tries to compose two OTs that operate on the same
-index (see Figure~\ref{fig:merge}). Otherwise, the conflict will be
-automatically resolved as before.
+When Alice and Bob modify the same sentence, with Alice's changes
+represented as $X$ and Bob's changes represented as $Y$, their changes
+will require conflict resolution if $X(Y)$ tries to compose two OTs
+that operate on the same index (see
+Figure~\ref{fig:merge}). Otherwise, the conflict will be automatically
+resolved as before.
 
 \vspace{5mm}
 \noindent
@@ -522,7 +529,7 @@ automatically resolved as before.
   detect the conflict, and Alice resolves the conflict. At a later
   point, Charlie meets Bob and synchronizes with him.}
 
-\vspace{5mm}  
+\vspace{5mm}
 
 After Alice and Charlie meet, Charlie's graph contains the conflict
 resolution.  When Charlie and Bob meet, the merge algorithm detects
@@ -532,7 +539,7 @@ can be updated to be identical to Charlie's (Figure~\ref{fig:image}).
 \begin{figure}[h]
   \centering
   \includegraphics[width=5in]{image.png}
-  \caption{Merge resolution for offline access.   \label{fig:image}}
+  \caption{Merge resolution for offline access.  \label{fig:image}}
 \end{figure}
 
 \vspace{5mm}
@@ -546,22 +553,23 @@ can be updated to be identical to Charlie's (Figure~\ref{fig:image}).
 
 When Alice and Bob meet, no conflict resolution will be
 required. Alice's OTs are $X = move(12,422, 1022)$, etc.  The OT of
-Bob's changes is $Y = insert(222, \text{``spurious text generation"})$. When Bob
-meets Alice, his Collabrador client will synchronize with her, and
-merge their text. The resulting transform will be 
+Bob's changes is $Y = insert(222, \text{``spurious text
+  generation"})$. When Bob meets Alice, his Collabrador client will
+synchronize with her, and merge their text. The resulting transform
+will be
 \begin{equation*}
-Y(X) \circ X = insert(822,
-\text{``spurious text generation"}) \circ move(12,422, 1022)
+  Y(X) \circ X = insert(822,
+  \text{``spurious text generation"}) \circ move(12,422, 1022)
 \end{equation*}
-The index 822 is determined as follows: index 1022 becomes index 612 because
-\(1022-(422-12) = 612.\)  The original insert, at location 222, is 210
-indices away from what is now index 612, and \(612+210 = 822.\) An equivalent
-result can be achieved by
+The index 822 is determined as follows: index 1022 becomes index 612
+because \(1022-(422-12) = 612.\) The original insert, at location 222,
+is 210 indices away from what is now index 612, and \(612+210 = 822.\)
+An equivalent result can be achieved by
 \begin{equation*}
-X(Y) \circ X = move(12,448,1048) \circ insert(222, \text{``spurious text generation"})
+  X(Y) \circ X = move(12,448,1048) \circ insert(222, \text{``spurious text generation"})
 \end{equation*}
-where the \textit{new\_loc} and \textit{end\_index} have been incremented by 24 (the number of
-characters in the inserted string).
+where the \textit{new\_loc} and \textit{end\_index} have been
+incremented by 24 (the number of characters in the inserted string).
 
 \vspace{5mm}
 \noindent
@@ -579,15 +587,17 @@ version, making conflict resolution unnecessary.
 Each Collabrador client keeps the list of users associated with a
 document, and tracks whether or not they are reachable. A commit
 cannot successfully begin unless all users are reachable. If any user
-is disconnected during the commit process before they enter the commiting state,
-the commit fails. If a user is disconneted after replying to the initator,
-but before the initiator can send out the name, he will recieve the changes
-the next time he synchronizes after he comes back online. If the initiator goes
-offline at any point before the commit succeeds, the other users will eventually time out. 
-If a user attempts to create a commit with the same name as an already existing
-commit, his Collabrador client will reject the name (the names of all prior commits
-will be in every user's graph). If a user attempts to commit while 
-another commit process is already in progress, both commit processes will fail.
+is disconnected during the commit process before they enter the
+commiting state, the commit fails. If a user is disconneted after
+replying to the initator, but before the initiator can send out the
+name, he will recieve the changes the next time he synchronizes after
+he comes back online. If the initiator goes offline at any point
+before the commit succeeds, the other users will eventually time out.
+If a user attempts to create a commit with the same name as an already
+existing commit, his Collabrador client will reject the name (the
+names of all prior commits will be in every user's graph). If a user
+attempts to commit while another commit process is already in
+progress, both commit processes will fail.
 
 Synchronization can occur when a user's Collabrador client sees one or
 more other users online, and it is a much more flexible process than
@@ -597,82 +607,72 @@ checkpoint to the local graph, the checkpoint is lost
 (all-or-nothing). If user A's machine crashes after saving the
 checkpoint locally, but before initiating the sync process, then
 Collabrador client will send out a sync request when user A comes back
-online.  If user B crashes afterbeginning to send sync data to A, 
-user A will terminate the sync process due to timeout and discard the
-partial data. If any user goes offline after he finishes syncing with at least one
-machine, but before all pairwise syncs have completed, the sync
-process will go on amongst all other machines. The booted user will
-re-synchronize during the integration process when he comes back
-online.
+online.  If user B crashes afterbeginning to send sync data to A, user
+A will terminate the sync process due to timeout and discard the
+partial data. If any user goes offline after he finishes syncing with
+at least one machine, but before all pairwise syncs have completed,
+the sync process will go on amongst all other machines. The booted
+user will re-synchronize during the integration process when he comes
+back online.
 
 We use TCP for reliable and accurate packet delivery, so we do not
-have to worry about data corruption at the application layer. 
+have to worry about data corruption at the application layer.
 
 \subsection{Performance}
 
 \subsubsection{Performance of the sync algorithm}
 
-When two computers synchronize, the slowest step comes from
-sending checkpoint databases from one computer to the
-other. Recall that users are synchronizing continuously in
-the background while connected to a network, so any
-checkpoints saved while on the network will be synchronized
-nearly immediately; in this case, the cost of a
-synchronization is just the time it takes to send one
-checkpoint from the provider to the initiator, and then one
-more checkpoint (the merged document) from the initiator to
-the provider.
+When two computers synchronize, the slowest step comes from sending
+checkpoint databases from one computer to the other. Recall that users
+are synchronizing continuously in the background while connected to a
+network, so any checkpoints saved while on the network will be
+synchronized nearly immediately; in this case, the cost of a
+synchronization is just the time it takes to send one checkpoint from
+the provider to the initiator, and then one more checkpoint (the
+merged document) from the initiator to the provider.
 
-In an ``average'' scenario, a user might click the ``save''
-button (thereby creating a checkpoint) after typing a
-paragraph. This document has paragraphs of 500--1000
-characters each, so 1000 characters per checkpoint seems
-reasonable. This corresponds to 1000 \emph{insert}
-operations, each of which takes roughly 6 bytes to store (1
-for the operation type, 1 for the character, and a 4-byte
-integer for position). If the user made lots of edits,
-there may also be about 1000 \emph{delete} operations, so
-the entire OT would take 12,000 bytes. The other
-information stored in the checkpoint object (e.g., the
-parent hashes and user visibility list) are very small by
-comparison. Thus, a normal checkpoint object appears to be
-about 12 kilobytes, or roughly 100 kilobits. Over a 1
-megabit per second Internet connection, this would take 0.1
-seconds to transmit. As previously mentioned, the initiator
-then needs to send a checkpoint back to the provider, so a
-sync step might take 0.2 seconds total.
+In an ``average'' scenario, a user might click the ``save'' button
+(thereby creating a checkpoint) after typing a paragraph. This
+document has paragraphs of 500--1000 characters each, so 1000
+characters per checkpoint seems reasonable. This corresponds to 1000
+\emph{insert} operations, each of which takes roughly 6 bytes to store
+(1 for the operation type, 1 for the character, and a 4-byte integer
+for position). If the user made lots of edits, there may also be about
+1000 \emph{delete} operations, so the entire OT would take 12,000
+bytes. The other information stored in the checkpoint object (e.g.,
+the parent hashes and user visibility list) are very small by
+comparison. Thus, a normal checkpoint object appears to be about 12
+kilobytes, or roughly 100 kilobits. Over a 1 megabit per second
+Internet connection, this would take 0.1 seconds to transmit. As
+previously mentioned, the initiator then needs to send a checkpoint
+back to the provider, so a sync step might take 0.2 seconds total.
 
-If a user goes offline for some time and then attempts to
-sync, the synchronization will take considerably longer
-because it needs to transmit information about \emph{all}
-checkpoints that occurred while the user was offline.
-Assuming (as before) that the space for storing the OT is
-the costliest requirement, it is sufficient to consider how
+If a user goes offline for some time and then attempts to sync, the
+synchronization will take considerably longer because it needs to
+transmit information about \emph{all} checkpoints that occurred while
+the user was offline.  Assuming (as before) that the space for storing
+the OT is the costliest requirement, it is sufficient to consider how
 large an OT may be after a user has been offline for a
-while. Consider, for instance, what happens if a user
-writes an entire 5,000-word paper while offline and then
-attempts to sync. In this paper, each word is about 10
-characters, so the edit would be roughly 50,000 characters.
-If the user went through many revisions while offline,
-there may be lots of deletions per inserted character. For
-lack of good data on how much overhead this would impose,
-make the assumption that this adds an order of magnitude of
-overhead, so there are 500,000 OT operations. Each one
-takes 6 bytes, so the overall data that needs to be
-transferred is 3 megabytes (or 24 megabits). This would
-take 24 seconds!
+while. Consider, for instance, what happens if a user writes an entire
+5,000-word paper while offline and then attempts to sync. In this
+paper, each word is about 10 characters, so the edit would be roughly
+50,000 characters.  If the user went through many revisions while
+offline, there may be lots of deletions per inserted character. For
+lack of good data on how much overhead this would impose, make the
+assumption that this adds an order of magnitude of overhead, so there
+are 500,000 OT operations. Each one takes 6 bytes, so the overall data
+that needs to be transferred is 3 megabytes (or 24 megabits). This
+would take 24 seconds!
 
-At first glance, it may seem like this 24-second operation
-would be prohibitively expensive in a network with many
-computers. Consider for example a network with 10 users. If
-a user $A$ who has been offline for a while comes online,
-it would take 240 seconds (or 4 minutes) for user $A$ to
-communicate with all other users. However, once a user $B$
-knows about $A$'s edits, user $B$ can also send those edits
-to others through the sync process. The spread of $A$'s
-edits in the system will follow a logistic curve, so
-propagating $A$'s edits to all users will only take
-logarithmic (rather than linear) time in the number of
+At first glance, it may seem like this 24-second operation would be
+prohibitively expensive in a network with many computers. Consider for
+example a network with 10 users. If a user $A$ who has been offline
+for a while comes online, it would take 240 seconds (or 4 minutes) for
+user $A$ to communicate with all other users. However, once a user $B$
+knows about $A$'s edits, user $B$ can also send those edits to others
+through the sync process. The spread of $A$'s edits in the system will
+follow a logistic curve, so propagating $A$'s edits to all users will
+only take logarithmic (rather than linear) time in the number of
 users.
 
 \subsubsection{Performance of the merge algorithm}
@@ -732,7 +732,7 @@ list that does not include the new user, and think that it is correct
 because his client was unaware of the new user.  There are ways around
 these problems, but this is a challenge we have left for later
 releases. The feature was not included in the first release because
-static groups greatly simplify the design, and allows Collabrador to 
+static groups greatly simplify the design, and allows Collabrador to
 have stronger guarantees about correctness.
 
 Finally, it is worth noting that Collabrador does not have an
