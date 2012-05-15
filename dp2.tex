@@ -177,8 +177,8 @@ intervals, sends a request to another computer asking if it is willing
 to synchronize.  The two conditions under which a computer will refuse
 a request are if it is waiting for a response from any computer about
 synchronizing (up to some time-out), or if it is currently
-synchronizing. Syncronization also ocurrs when a user saves or initiates
-a named checkpoint. When two computers agree to synchronize, the computer
+synchronizing. Syncronization also ocurrs when a user saves. 
+When two computers agree to synchronize, the computer
 that initiated the request will play the role of initiator and the
 other computer will be the provider. When this process finishes, the
 initiator will wait a random interval and then send a request to
@@ -432,28 +432,46 @@ process. The only possible failure mode is if there is a new user
 but this new user can be safely disregarded because it has never 
 had the chance to obtain any version of the document, much less modify it.
 
-The process for creating a commit is mostly the same as the process
-for creating an unnamed checkpoint. The only difference is that,
-during the synchronization process, users also exchange the name of
-the checkpoint and its associated hash. If the initiator successfully
-synchronizes with all users on the network, the initiator's leaf node
-is the same hash as at the start of the process, and the leaf node's
-user visibility list exactly equals the computer's known user list,
-then the commit is successful. If any of these conditions are not met
-within a pre-set number of passes through the synchronization
-round-robin, the commit fails.
+Creating a commit is a two-stage process. First, the initiator sends out 
+a message saying, ``I want to synchronize. Do you have this node?''. Each
+user who has this node enters the \emph{commiting} state, and sends a 
+response to the initiator. If all users associated with the document respond, 
+at this point the commit is successful, and the initiator will send out a
+name for all the users to add to their hash table mapping user-defined names 
+to checkpoint hashes. At this point, everybody is in the 
+\emph{committed state}. If any of the users do not have the node, the 
+initiator aborts the commit. The providers and the initiators each have a 
+timeout so that they will not be left waiting forever for a commit to complete,
+so after an initator aborts a commit, the users will all leave the commiting
+state eventually. If two users atempt to initiate a commit at the same time,
+they both will fail, beacsue a user cannot acknowledge any commit requests 
+while already in the commiting state. See Section 3.2 %~\ref{sec:failures} 
+for a detailed analysis of commit failures. 
 
-Finally, it is worth noting what happens in the case of a failed
-commit. Imagine trying to commit a version named ``final'' and it
-fails, and then trying again. If a user in the system is asked for the
-version ``final'' before the second commit finishes, there is no
-guarantee as to what version of the document it will return. To avoid
-this problem, Collabrador requires that no two commit attempts use the
-same name. Because some users may not know the names of all failed
-commits, this restriction is enforced in practice, not in software. In
-other words, the human user needs to know that trying the same name
-twice can lead to undesirable results, but there are no software
-safeguards to prevent this situation from occurring. 
+
+
+%The process for creating a commit is mostly the same as the process
+%for creating an unnamed checkpoint. The only difference is that,
+%during the synchronization process, users also exchange the name of
+%the checkpoint and its associated hash. If the initiator successfully
+%synchronizes with all users on the network, the initiator's leaf node
+%is the same hash as at the start of the process, and the leaf node's
+%user visibility list exactly equals the computer's known user list,
+%then the commit is successful. If any of these conditions are not met
+%within a pre-set number of passes through the synchronization
+%round-robin, the commit fails.
+
+%Fint is worth noting what happens in the case of a failed
+%commit. Imagine trying to commit a version named ``final'' and it
+%fails, and then trying again. If a user in the system is asked for the
+%version ``final'' before the second commit finishes, there is no
+%guarantee as to what version of the document it will return. To avoid
+%this problem, Collabrador requires that no two commit attempts use the
+%same name. Because some users may not know the names of all failed
+%commits, this restriction is enforced in practice, not in software. In
+%other words, the human user needs to know that trying the same name
+%twice can lead to undesirable results, but there are no software
+%safeguards to prevent this situation from occurring. 
 
 \section{Analysis}
 
@@ -554,13 +572,15 @@ version, making conflict resolution unnecessary.
 Each Collabrador client keeps the list of users associated with a
 document, and tracks whether or not they are reachable. A commit
 cannot successfully begin unless all users are reachable. If any user
-is disconnected during the commit process, the commit fails. The
-commit may have created a node on some of the user' computers if it
-partially completed. To avoid conflicts, Collabrador requires each
-attempted commit to have a unique name. This ensures that no user will
-ever have a commit with the same name in their DAG. If the commit
-process notices that the commit name is already contained in a user's
-DAG, the commit aborts immediately.
+is disconnected during the commit process before they enter the commiting state,
+the commit fails. If a user is disconneted after replying to the initator,
+but before the initiator can send out the name, he will recieve the changes
+the next time he synchronizes after he comes back online. If the initiator goes
+offline at any point before the commit succeeds, the other users will eventually time out. 
+If a user attempts to create a commit with the same name as an already existing
+commit, his Collabrador client will reject the name (the names of all prior commits
+will be in every user's graph). If a user attempts to commit while 
+another commit process is already in progress, both commit processes will fail.
 
 Synchronization can occur when a user's Collabrador client sees one or
 more other users online, and it is a much more flexible process than
