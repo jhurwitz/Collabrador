@@ -31,32 +31,6 @@ and is the basis for all major collaborative editors.
 
 \section{Design}
 
-Users have the ability to edit documents offline. Once the user comes
-back online Collabrador synchronizes with other online users and
-merges the changes made while offline. Direct connectivity is also
-supported, using ad-hoc networking and Bonjour to discover other
-Collabrador users. When a user joins the internet (or an ad-hoc
-network), his Collabrador client will integrate him into the network,
-merging the latest commit into his local copy.
-
-A checkpoint occurs automatically when a user saves, and is named by
-hash of the document, provenance graph, and change log. Checkpoints
-happen when a user fully connected, offline, or connected ad-hoc. The
-hash for a checkpoint will be unique unless users make the same
-changes in the same way, thus there will always be agreement as to
-which document version corresponds to a version name. We will also
-allow user-provided comments e.g. ``Ben's final draft'', however the
-user is responsible for ensuring that these are useful.
-
-Commits are a special type of checkpoint that a user manually
-initiates. The commit process involves merging changes from all users
-into one agreed-upon document. Merges are autonomous unless there has
-been two or more edits at the same point, relative to a common
-ancestor. This is called a conflict. If conflicts occurs, the machine
-running the merge algorithm will ask the user to resolve them by
-hand. Once each user's changes have been merged, all users must
-approve the resulting document before the commit is finalized.
-
 \subsection{System architecture}
 
 On each computer, Collabrador consists of a \textbf{text editor} and a
@@ -104,7 +78,7 @@ server. Collabrador's solution is %for each user to store in its local
 a synchronization process in the background that lets users
 constantly communicate with each other to share and exchange parts of
 the graph. Collabrador operates on top of TCP/IP to ensure reliable and
-in-order packet delivery.
+in-order packet delivery. 
 
 The checkpoint database can be in two states. At most times, a user's 
 checkpoint database will be a graph with only a single leaf node, 
@@ -525,17 +499,16 @@ checkpoint to the local graph, the checkpoint is lost
 (all-or-nothing). If user A's machine crashes after saving the
 checkpoint locally, but before initiating the sync process, then
 Collabrador client will send out a sync request when user A comes back
-online.  If user A crashes after sending a sync request to user B, the
-machine running the merge algorithm will roll back all changes if user
-A's machine becomes unresponsive before the sync process completes. If
-any user goes offline after he finishes syncing with at least one
+online.  If user B crashes afterbeginning to send sync data to A, 
+user A will terminate the sync process due to timeout and discard the
+partial data. If any user goes offline after he finishes syncing with at least one
 machine, but before all pairwise syncs have completed, the sync
 process will go on amongst all other machines. The booted user will
 re-synchronize during the integration process when he comes back
 online.
 
 We use TCP for reliable and accurate packet delivery, so we do not
-have to worry about data corruption at the application layer.
+have to worry about data corruption at the application layer. 
 
 \subsection{Performance}
 
