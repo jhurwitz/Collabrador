@@ -524,7 +524,7 @@ Collabrador is distributed, synchronizations are pairwise, making the
 sync algorithm quadratic with respect to the number of users. A
 centralized server would have asymptotically linear synchronization.
 
-Many collaborative editors(?) use version vectors: a vector of version 
+Many collaborative editors use version vectors: a vector of version 
 corresponding to each user. For example, V = (1, 2, 2) means that the first
 user has version 1 of the document, and the other two have the second version.
 This is a compact and nifty way to represent version data. V1 is newer than V2
@@ -540,10 +540,6 @@ history. The more frequently a document has been committed, the more
 overhead there is. Version vector overhead only increases as the
 number of users editing a document increases.
 
-Related to this the fact that the merge algorithm takes longer as a
-the document gets longer. This effect can be combated with the use of
-checkpoints.
-
 We support only named checkpoints or dynamic membership, not
 both. This is because the ability to delete users greatly complicates
 things. For example, if user A is deleted, and broadcasts while only
@@ -555,8 +551,8 @@ list that does not include the new user, and think that it is correct
 because his client was unaware of the new user.  There are ways around
 these problems, but this is a challenge we have left for later
 releases. The feature was not included in the first release because
-static groups greatly simplify the design, and allows Collabrador toh
-ave stronger guarantees about correctness.
+static groups greatly simplify the design, and allows Collabrador to 
+have stronger guarantees about correctness.
 
 Finally, it is worth noting that Collabrador does not have an
 authentication system, so it is very simple for a user to send false
