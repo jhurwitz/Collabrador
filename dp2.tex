@@ -514,6 +514,68 @@ have to worry about data corruption at the application layer.
 
 \subsubsection{Performance of the sync algorithm}
 
+When two computers synchronize, the slowest step comes from
+sending checkpoint databases from one computer to the
+other. Recall that users are synchronizing continuously in
+the background while connected to a network, so any
+checkpoints saved while on the network will be synchronized
+nearly immediately; in this case, the cost of a
+synchronization is just the time it takes to send one
+checkpoint from the provider to the initiator, and then one
+more checkpoint (the merged document) from the initiator to
+the provider.
+
+In an ``average'' scenario, a user might click the ``save''
+button (thereby creating a checkpoint) after typing a
+paragraph. This document has paragraphs of 500--1000
+characters each, so 1000 characters per checkpoint seems
+reasonable. This corresponds to 1000 \emph{insert}
+operations, each of which takes roughly 6 bytes to store (1
+for the operation type, 1 for the character, and a 4-byte
+integer for position). If the user made lots of edits,
+there may also be about 1000 \emph{delete} operations, so
+the entire OT would take 12,000 bytes. The other
+information stored in the checkpoint object (e.g., the
+parent hashes and user visibility list) are very small by
+comparison. Thus, a normal checkpoint object appears to be
+about 12 kilobytes, or roughly 100 kilobits. Over a 1
+megabit per second Internet connection, this would take 0.1
+seconds to transmit. As previously mentioned, the initiator
+then needs to send a checkpoint back to the provider, so a
+sync step might take 0.2 seconds total.
+
+If a user goes offline for some time and then attempts to
+sync, the synchronization will take considerably longer
+because it needs to transmit information about \emph{all}
+checkpoints that occurred while the user was offline.
+Assuming (as before) that the space for storing the OT is
+the costliest requirement, it is sufficient to consider how
+large an OT may be after a user has been offline for a
+while. Consider, for instance, what happens if a user
+writes an entire 5,000-word paper while offline and then
+attempts to sync. In this paper, each word is about 10
+characters, so the edit would be roughly 50,000 characters.
+If the user went through many revisions while offline,
+there may be lots of deletions per inserted character. For
+lack of good data on how much overhead this would impose,
+make the assumption that this adds an order of magnitude of
+overhead, so there are 500,000 OT operations. Each one
+takes 6 bytes, so the overall data that needs to be
+transferred is 3 megabytes (or 24 megabits). This would
+take 24 seconds!
+
+At first glance, it may seem like this 24-second operation
+would be prohibitively expensive in a network with many
+computers. Consider for example a network with 10 users. If
+a user $A$ who has been offline for a while comes online,
+it would take 240 seconds (or 4 minutes) for user $A$ to
+communicate with all other users. However, once a user $B$
+knows about $A$'s edits, user $B$ can also send those edits
+to others through the sync process. The spread of $A$'s
+edits in the system will follow a logistic curve, so
+propagating $A$'s edits to all users will only take
+logarithmic (rather than linear) time in the number of
+users.
 
 \subsubsection{Performance of the merge algorithm}
 
